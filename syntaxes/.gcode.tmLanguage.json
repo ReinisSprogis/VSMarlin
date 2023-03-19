@@ -1,0 +1,136 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Marlin",
+	"patterns": [
+		{
+			"include": "#comment"
+		},
+		{
+			"include": "#rapid"
+		},
+		{
+			"include": "#positionX"
+		},
+		{
+			"include": "#positionY"
+		},
+		{
+			"include": "#positionZ"
+		},
+		{
+			"include": "#positioning.linear"
+		},
+		{
+			"include": "#positioning.circular"
+		},
+		{
+			"include": "#positioning.keywords"
+		},
+		{
+			"include": "#mcodes"
+		},
+		{
+			"include": "#scodes"
+		},
+		{
+			"include": "#fcodes"
+		},
+		{
+			"include": "#ecodes"
+		}
+	],
+	"repository": {
+		"comment": {
+			"patterns": [
+			  {
+				"name": "comment.line.semicolon",
+				"match": ";.*$"
+			  }
+			]
+		  },
+		"rapid": {
+			"patterns": [
+				{
+					"name": "keyword.control.rapid",
+					"match": "\\b(G0|G00)\\b"
+				}
+				
+			]
+		},
+		"positionX": {
+			"patterns": [
+				{
+					"name": "keyword.control.positionX",
+					"match": "\\b(X|X[-0-9.]+)\\b"
+				}
+			]
+		},
+		"positionY": {
+			"patterns": [
+				{
+					"name": "keyword.control.positionY",
+					"match": "\\b(Y|Y[-0-9.]+)\\b"
+				}
+			]
+		},
+		"positionZ": {
+			"patterns": [
+				{
+					"name": "keyword.control.positionZ",
+					"match": "\\b(Z|Z[-0-9.]+)\\b"
+				}
+			]
+		},
+		"positioning.linear": {
+			"patterns": [
+				{
+					"name": "keyword.control.positioning.linear",
+					"match": "\\b(G1|G01)\\b"
+				}
+			]
+		},
+		"positioning.circular": {
+			"patterns": [
+				{
+					"name": "keyword.control.positioning.circular",
+					"match": "\\b(G2|G02|G3|G03)\\b"
+				}
+			]
+		},
+		
+		"mcodes": {
+			"patterns": [
+				{
+					"name": "keyword.control.mcodes",
+					"match": "\\b(M[0-9]*)\\b"
+				}
+			]
+		},
+		"scodes": {
+			"patterns": [
+				{
+					"name": "keyword.control.scodes",
+					"match": "\\b(S[-0-9.]+)\\b"
+				}
+			]
+		},
+		"fcodes": {
+			"patterns": [
+				{
+					"name": "keyword.control.fcodes",
+					"match": "\\b(F[-0-9.]+)\\b"
+				}
+			]
+		},
+		"ecodes": {
+			"patterns": [
+				{
+					"name": "keyword.control.ecodes",
+					"match": "\\b(E[-0-9.]+)\\b"
+				}
+			]
+		}
+
+	},
+	"scopeName": "source.gcode"
+}

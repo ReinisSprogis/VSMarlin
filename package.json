@@ -1,0 +1,145 @@
+{
+  "name": "marlin",
+  "displayName": "marlin",
+  "description": "3D printing G-code Marlin support",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.76.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "main": "./extension",
+  "hoverProvider": [
+    {
+      "language": "marlin",
+      "scheme": "file",
+      "pattern": "**/*.gcode",
+      "documentSelector": [
+        "marlin"
+      ],
+      "provideHover": {
+        "myAPIElement": {
+          "markdown": "This is documentation for my API element."
+        }
+      }
+    }
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "marlin",
+        "aliases": [
+          "Marlin",
+          ".gcode .g",
+          "gcode",
+          "g",
+          "3D printing"
+        ],
+        "extensions": [
+          ".gcode"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "marlin",
+        "scopeName": "source.gcode",
+        "path": "./syntaxes/.gcode.tmLanguage.json"
+      }
+    ],
+    "configurationDefaults": {
+      "editor.insertSpaces": false,
+      "editor.snippetSuggestions": "top",
+      "editor.tokenColorCustomizations": {
+        "textMateRules": [
+          {
+            "name": "Rapid",
+            "scope": "keyword.control.rapid",
+            "settings": {
+              "foreground": "#ff0000",
+              "fontStyle": "bold"
+            }
+          },
+          {
+            "name": "Xpoosition",
+            "scope": "keyword.control.positionX",
+            "settings": {
+              "foreground": "#ff0000c2",
+              "fontStyle": "bold"
+            }
+          },
+          {
+            "name": "Ypoosition",
+            "scope": "keyword.control.positionY",
+            "settings": {
+              "foreground": "#00ff2ac2",
+              "fontStyle": "bold"
+            }
+          },
+          {
+            "name": "Zpoosition",
+            "scope": "keyword.control.positionZ",
+            "settings": {
+              "foreground": "#3cb1ffc2",
+              "fontStyle": "bold"
+            }
+          },
+          {
+            "name": "Linear",
+            "scope": "keyword.control.positioning.linear",
+            "settings": {
+              "foreground": "#ffed48",
+              "fontStyle": "bold"
+            }
+          },
+          {
+            "name": "Circlular",
+            "scope": "keyword.control.positioning.circular",
+            "settings": {
+              "foreground": "#ff0095",
+              "fontStyle": "bold"
+            }
+          },
+          {
+            "name": "Mcodes",
+            "scope": "keyword.control.mcodes",
+            "settings": {
+              "foreground": "#ff8800",
+              "fontStyle": "bold"
+            }
+          },
+          {
+            "name": "Scodes",
+            "scope": "keyword.control.scodes",
+            "settings": {
+              "foreground": "#d071dd",
+              "fontStyle": "bold"
+            }
+          },
+          {
+            "name": "Fcodes",
+            "scope": "keyword.control.fcodes",
+            "settings": {
+              "foreground": "#4d7ee9",
+              "fontStyle": "bold"
+            }
+          },
+          {
+            "name": "Ecodes",
+            "scope": "keyword.control.ecodes",
+            "settings": {
+              "foreground": "#a66eff",
+              "fontStyle": "bold"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "dependencies": {
+    "axios": "^1.3.4",
+    "cheerio": "^1.0.0-rc.12"
+  }
+}
