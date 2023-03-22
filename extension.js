@@ -78,40 +78,35 @@ function parseGcode(gcodeContent) {
 
 //   const line = new THREE.Line(geometry, material);
   
-  function getToolpathHtml(toolpathData) {
-    const threeJsScript = `https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js`;
- 
-  
-    const toolpathScript = `
-   
+function getToolpathHtml(toolpathData) {
+  const threeJsScript = `https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js`;
+
+  const toolpathScript = `
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
-  
-    const loader = new THREE.FileLoader();
 
-        const square = new THREE.BoxGeometry(1, 1, 1);
-        const material = new THREE.MeshBasicMaterial({ color: 0xFF0000 });
-        const cube = new THREE.Mesh(square, material);
-      scene.add(cube);
-  
-      camera.position.y = 1;
-        camera.position.z = 3;
-        camera.lookAt(0, 0, 0);
-  
-      
-      
-  
+    camera.position.set(0, 0, 100);
+    camera.lookAt(0, 0, 0);
+
+    const material = new THREE.LineBasicMaterial({ color: 0x0000ff });
+
+    const points = ${JSON.stringify(toolpathData)};
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+
+    const line = new THREE.Line(geometry, material);
+    scene.add(line);
+
     function animate() {
         requestAnimationFrame(animate);
         renderer.render(scene, camera);
-      }
-      animate();
+    }
+    animate();
   `;
-  
-    return `
+
+  return `
     <!DOCTYPE html>
     <html lang="en">
       <head>
@@ -129,13 +124,10 @@ function parseGcode(gcodeContent) {
         <script src="${threeJsScript}"></script>
       </head>
       <body>
-      <p>Hello<p>
         <script>
         ${toolpathScript}
         </script>
       </body>
     </html>
-    
-          `;
-       }
-  
+  `;
+}
