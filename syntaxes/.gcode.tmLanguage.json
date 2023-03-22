@@ -37,6 +37,9 @@
 		},
 		{
 			"include": "#ecodes"
+		},
+		{
+			"include": "#gcodes"
 		}
 	],
 	"repository": {
@@ -127,6 +130,14 @@
 				{
 					"name": "keyword.control.ecodes",
 					"match": "\\b(E[-0-9.]+)\\b"
+				}
+			]
+		},
+		"gcodes": {
+			"patterns": [
+				{
+					"name": "keyword.control.gcodes",
+					"match": "\\b(G[0-9]*)\\b"
 				}
 			]
 		}

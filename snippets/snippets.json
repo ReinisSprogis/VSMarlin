@@ -1,0 +1,30 @@
+{
+    "categories": ["Snippets"],
+
+    "New program":
+    {
+        "prefix": "begin",
+        "description": "Creates a snippet for new program",
+        "body":
+        [
+        ";FLAVOR:Marlin",
+        ";TIME:4729",
+        ";Filament used: 17.3129m",
+        ";Layer height: 0.8",
+        ";MINX:26.505",
+        ";MINY:28.774",
+        ";MINZ:0.1",
+        ";MAXX:183.494",
+        ";MAXY:185.767",
+        ";MAXZ:17.71",
+        "M104 S60",
+        "M105",
+        "M190 S60",
+        "M104 S200",
+        "M105"
+        
+
+
+        ]
+    }
+}

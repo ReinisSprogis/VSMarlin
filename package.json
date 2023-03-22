@@ -26,6 +26,20 @@
     }
   ],
   "contributes": {
+    "commands": [
+      {
+        "command": "marlin.showToolpath",
+        "title": "Show Toolpath"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "marlin.showToolpath",
+        "key": "ctrl+alt+r",
+        "mac": "cmd+alt+r",
+        "when": "editorTextFocus"
+      }
+    ],
     "languages": [
       {
         "id": "marlin",
@@ -40,6 +54,12 @@
           ".gcode"
         ],
         "configuration": "./language-configuration.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "marlin",
+        "path": "/snippets/snippets.json"
       }
     ],
     "grammars": [
@@ -58,15 +78,15 @@
             "name": "Rapid",
             "scope": "keyword.control.rapid",
             "settings": {
-              "foreground": "#ff0000",
+              "foreground": "#ff4e4e",
               "fontStyle": "bold"
             }
           },
           {
-            "name": "Xpoosition",
+            "name": "Xposition",
             "scope": "keyword.control.positionX",
             "settings": {
-              "foreground": "#ff0000c2",
+              "foreground": "#ff8888c2",
               "fontStyle": "bold"
             }
           },
@@ -74,7 +94,7 @@
             "name": "Ypoosition",
             "scope": "keyword.control.positionY",
             "settings": {
-              "foreground": "#00ff2ac2",
+              "foreground": "#77f18b",
               "fontStyle": "bold"
             }
           },
@@ -82,7 +102,7 @@
             "name": "Zpoosition",
             "scope": "keyword.control.positionZ",
             "settings": {
-              "foreground": "#3cb1ffc2",
+              "foreground": "#76eaff",
               "fontStyle": "bold"
             }
           },
@@ -98,7 +118,7 @@
             "name": "Circlular",
             "scope": "keyword.control.positioning.circular",
             "settings": {
-              "foreground": "#ff0095",
+              "foreground": "#ff60bd",
               "fontStyle": "bold"
             }
           },
@@ -106,7 +126,7 @@
             "name": "Mcodes",
             "scope": "keyword.control.mcodes",
             "settings": {
-              "foreground": "#ff8800",
+              "foreground": "#ffa640",
               "fontStyle": "bold"
             }
           },
@@ -114,7 +134,7 @@
             "name": "Scodes",
             "scope": "keyword.control.scodes",
             "settings": {
-              "foreground": "#d071dd",
+              "foreground": "#f07eff",
               "fontStyle": "bold"
             }
           },
@@ -122,7 +142,7 @@
             "name": "Fcodes",
             "scope": "keyword.control.fcodes",
             "settings": {
-              "foreground": "#4d7ee9",
+              "foreground": "#a8c4ff",
               "fontStyle": "bold"
             }
           },
@@ -130,7 +150,15 @@
             "name": "Ecodes",
             "scope": "keyword.control.ecodes",
             "settings": {
-              "foreground": "#a66eff",
+              "foreground": "#ceafff",
+              "fontStyle": "bold"
+            }
+          },
+          {
+            "name": "Gcodes",
+            "scope": "keyword.control.gcodes",
+            "settings": {
+              "foreground": "#5bb0ff",
               "fontStyle": "bold"
             }
           }
@@ -140,6 +168,7 @@
   },
   "dependencies": {
     "axios": "^1.3.4",
-    "cheerio": "^1.0.0-rc.12"
+    "cheerio": "^1.0.0-rc.12",
+    "three": "^0.150.1"
   }
 }

@@ -117,10 +117,33 @@ function hoverInfoActivate(context) {
                 return axios.get('https://marlinfw.org/docs/gcode/' + filtered + '.html')
                     .then(response => {
                         const data = cheerio.load(response.data);
-                        const content = data('div.col-lg-12.row.long').html();
-
-                        console.log("Content: " + content);
-                        const markdownString = new vscode.MarkdownString('' + content.toString(), true);
+                        const description = data('div.col-lg-12.row.long').html();
+                        const notes = data('div.col-lg-12.row.notes').html();
+                        const usage = data('div.col-lg-12.row.usage').html();
+                        const params = data('div.col-lg-12.row.params').html();
+                        const examples = data('div.col-lg-12.row.examples').html();
+                        console.log("examples: " + examples);
+                        const markdownString = new vscode.MarkdownString();
+                        console.log("Content: " + description);
+                        if(description != null){
+                         markdownString.appendMarkdown('' + description.toString(), true);
+                        }
+                        if(notes != null){
+                        markdownString.appendMarkdown('_______________________________________________________________');
+                        markdownString.appendMarkdown(notes,true);
+                        }
+                        if(usage != null){
+                        markdownString.appendMarkdown('_______________________________________________________________');
+                        markdownString.appendMarkdown(usage.toString(), true);
+                        }
+                        if(params != null){
+                        markdownString.appendMarkdown('_______________________________________________________________');
+                        markdownString.appendMarkdown(params.toString(), true);
+                        }
+                        if(examples != null){
+                        markdownString.appendMarkdown('_______________________________________________________________');
+                        markdownString.appendMarkdown(examples.toString(), true);
+                        }
                         markdownString.supportHtml = true;
                         return new vscode.Hover(markdownString);
                     })
