@@ -17,6 +17,7 @@ async function activate(context) {
       vscode.ViewColumn.Beside,
       {
         enableScripts: true
+        
       }
     );
 
