@@ -44,7 +44,7 @@ function parseGcode(gcodeContent) {
   let current = new THREE.Vector3();
 
   for (const line of lines) {
-    if (line.startsWith('G1')) {
+    if (line.startsWith('G1') || line.startsWith('G0')) {
       const matchX = line.match(/X(-?\d+(\.\d+)?)/);
       const matchY = line.match(/Y(-?\d+(\.\d+)?)/);
       const matchZ = line.match(/Z(-?\d+(\.\d+)?)/);
