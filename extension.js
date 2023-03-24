@@ -6,12 +6,13 @@ const vscode = require('vscode');
 const { hoverInfoActivate } = require('./hover');
 const { graphics } = require('./graphics');
 const Printer = require('./printerCommunication');
-
+const { nodes } = require('./nodes.js');
 
 function activate(context) {
   console.log('Congratulations, your extension "extension" is now active!');
   hoverInfoActivate(context);
   graphics(context);
+  nodes(context);
   let printer;
 
   context.subscriptions.push(

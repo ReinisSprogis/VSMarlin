@@ -18,7 +18,7 @@
             position: absolute;
             font-size: 16px;
             font-weight: bold;
-            z-index: 100;
+            z-index: 150;
         }
 
         #labelX {
@@ -55,7 +55,9 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
-        
+        import { WebGLRenderer } from "three";
+
+
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         scene.background = new THREE.Color(0xffffff);
@@ -63,49 +65,7 @@
         //normalize the direction vector (convert to vector of length 1)
         const origin = new THREE.Vector3(0, 0, 0);
         const length = 50;
-        // ... other code ...
-        function createLabelShape(label) {
-            const vertices = [];
 
-            if (label === 'X') {
-                vertices.push(
-                    0, 0, 0,
-                    1, 1, 0,
-                    0, 1, 0,
-                    1, 0, 0,
-                    1, 1, 0
-                );
-            } else if (label === 'Y') {
-                vertices.push(
-                    0.5, 1, 0,
-                    0, 0, 0,
-                    0.5, 0, 0,
-                    1, 0, 0,
-                    0.5, 1, 0
-                );
-            } else if (label === 'Z') {
-                vertices.push(
-                    0, 1, 0,
-                    1, 1, 0,
-                    0, 0, 0,
-                    1, 0, 0
-                );
-            }
-
-            const geometry = new THREE.BufferGeometry();
-            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-            return geometry;
-        }
-        function createCustomLabel(label, position, color) {
-            const geometry = createLabelShape(label);
-            const material = new THREE.LineBasicMaterial({ color: color });
-            const line = new THREE.Line(geometry, material);
-            line.position.copy(position);
-            line.scale.setScalar(5);
-            scene.add(line);
-        }
-
-        // ... other code ...
         // X axis arrow (red)
         const dirX = new THREE.Vector3(1, 0, 0);
         dirX.normalize();
@@ -127,14 +87,6 @@
         const arrowHelperZ = new THREE.ArrowHelper(dirZ, origin, length, hexZ);
         scene.add(arrowHelperZ);
 
-        // X axis label
-        createCustomLabel('X', new THREE.Vector3(length + 3, 0, 0), hexX);
-
-        // Y axis label
-        createCustomLabel('Y', new THREE.Vector3(0, length + 3, 0), hexY);
-
-        // Z axis label
-        createCustomLabel('Z', new THREE.Vector3(0, 0, length + 3), hexZ);
 
         const toolpathData = TOOLPATH_DATA_PLACEHOLDER;
         const material = new THREE.LineBasicMaterial({ color: 0x000000 });
@@ -142,24 +94,71 @@
         const line = new THREE.Line(geometry, material);
         scene.add(line);
 
-        camera.position.y = 1;
-        camera.position.x = 100;
-        camera.position.z = 300;
-        camera.lookAt(0, 0, 0);
+        camera.position.y = -89;
+        camera.position.x = 72;
+        camera.position.z = 105;
+        camera.rotation.x = 1.0385933317856904;
+        camera.rotation.y = 0;
+        camera.rotation.z = 0.002;
 
+        //camera.lookAt(72, 89, 0);
 
-
-        const renderer = new THREE.WebGLRenderer();
+        // RENDERER AND CONTROLS
+        const renderer = new THREE.WebGLRenderer({
+	powerPreference: "high-performance",
+	antialias: true,
+	stencil: false,
+	depth: false
+});
         const controls = new OrbitControls(camera, renderer.domElement);
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
+        function updateLabels() {
+            // Calculate screen position for the X label
+            const screenPositionX = new THREE.Vector3(length, 0, 0);
+            screenPositionX.project(camera);
+            screenPositionX.x = (screenPositionX.x * 0.5 + 0.5) * window.innerWidth;
+            screenPositionX.y = (-screenPositionX.y * 0.5 + 0.5) * window.innerHeight;
 
+            // Update the X label position
+            const labelX = document.getElementById('labelX');
+            labelX.style.left = `${screenPositionX.x}px`;
+            labelX.style.top = `${screenPositionX.y}px`;
+
+            // Calculate screen position for the Y label
+            const screenPositionY = new THREE.Vector3(0, length, 0);
+            screenPositionY.project(camera);
+            screenPositionY.x = (screenPositionY.x * 0.5 + 0.5) * window.innerWidth;
+            screenPositionY.y = (-screenPositionY.y * 0.5 + 0.5) * window.innerHeight;
+            // UPDATE THE Y LABEL POSITION
+            const labelY = document.getElementById('labelY');
+            labelY.style.left = `${screenPositionY.x}px`;
+            labelY.style.top = `${screenPositionY.y}px`;
+
+            // Calculate screen position for the Z label
+            const screenPositionZ = new THREE.Vector3(0, 0, length);
+            screenPositionZ.project(camera);
+            screenPositionZ.x = (screenPositionZ.x * 0.5 + 0.5) * window.innerWidth;
+            screenPositionZ.y = (-screenPositionZ.y * 0.5 + 0.5) * window.innerHeight;
+            // UPDATE THE Z LABEL POSITION
+            const labelZ = document.getElementById('labelZ');
+            labelZ.style.left = `${screenPositionZ.x}px`;
+            labelZ.style.top = `${screenPositionZ.y}px`;
+
+
+        }
 
         function animate() {
             requestAnimationFrame(animate);
-
+            updateLabels();
             controls.update();
+            //Cameras position log
+            //console.log( camera.position);
+            //cameras look at log
+            //console.log(camera.lookAt);
+            //cameras rotation log
+            console.log(camera.rotation);
             renderer.render(scene, camera);
         }
         animate();

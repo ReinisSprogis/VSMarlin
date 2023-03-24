@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nodes</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    /* Add your custom styles here */
+  </style>
+</head>
+<body>
+  <div id="nodes-container">
+    <svg width="800" height="600"></svg>
+  </div>
+
+  <script>
+    (function() {
+      const nodesData = JSON.parse('NODES_DATA_PLACEHOLDER');
+      
+      const svg = d3.select('svg');
+      const width = parseInt(svg.attr('width'));
+      const height = parseInt(svg.attr('height'));
+
+      const nodes = svg.selectAll('g.node')
+        .data(nodesData)
+        .enter()
+        .append('g')
+        .attr('class', 'node')
+        .attr('transform', (d, i) => `translate(${width / 2}, ${i * 30 + 20})`);
+
+      nodes.append('rect')
+        .attr('width', 200)
+        .attr('height', 20)
+        .attr('fill', d => d.type === 'parameter' ? 'lightblue' : 'lightgray');
+
+      nodes.append('text')
+        .attr('x', 10)
+        .attr('y', 15)
+        .attr('font-size', 12)
+        .text(d => d.type === 'parameter' ? `${d.name}: ${d.value}` : d.value);
+    })();
+  </script>
+</body>
+</html>

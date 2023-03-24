@@ -50,6 +50,12 @@
         "key": "ctrl+alt+s",
         "mac": "cmd+alt+s",
         "when": "editorTextFocus"
+      },
+      {
+        "command": "marlin.showNodes",
+        "key": "ctrl+alt+n",
+        "mac": "cmd+alt+s",
+        "when": "editorTextFocus"
       }
     ],
     "languages": [
