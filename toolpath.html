@@ -41,6 +41,15 @@
             z-index: 100;
             display: block;
         }
+
+        .slider-container {
+            position: relative;
+        }
+
+        .slider {
+            position: absolute;
+            width: 100%;
+        }
     </style>
 
 </head>
@@ -51,12 +60,15 @@
     <!-- Remove this when import maps will be widely supported -->
     <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
 
-    <input type="range" id="rangeSlider" min="0" max="1" step="0.0001" value="0.01"
-        style="position: absolute; top: 10px; left: 10px; width: 95%;">
-    <label id="rangeLabel" style="position: absolute; top: 10px; left: 220px;">100%</label>
-
+    <input type="range" id="rangeSliderEnd" min="0" max="1" step="0.00001" value="0.01"
+        style="position: absolute; bottom: 5px; left: 10px; width: 95%;">
+        <input type="range" id="rangeSliderStart" min="0" max="1" step="0.00001" value="0.01"
+        style="position: absolute; bottom: 20px; left: 10px; width: 95%;">
+    <label id="rangeLabel" style="position: absolute; bottom: 25px; left:50%;">100%</label>
+   
     <input type="checkbox" id="toggleLines" checked>
     <input type="checkbox" id="togglePoints" checked>
+    <input type="checkbox" id="camera" checked>
 
     <div id="datum">0.0</div>
 
@@ -91,7 +103,8 @@
         let clock;
         let points;
 
-        const slider = document.getElementById("rangeSlider");
+        const rangeSiderEnd = document.getElementById("rangeSliderEnd");
+        const rangeSiderStart = document.getElementById("rangeSliderStart");
         const rangeLabel = document.getElementById("rangeLabel");
         const color = new THREE.Color();
         const pointer = new THREE.Vector2(Infinity, Infinity);
@@ -137,12 +150,13 @@
         init();
         animate();
 
+
         function init() {
             clock = new THREE.Clock();
             const frustumSize = 400;
             camera = null;
             const aspect = window.innerWidth / window.innerHeight;
-           
+
             //***Scene***//
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x565656);
@@ -155,8 +169,8 @@
                 depth: false
             });
 
-             //***Camera***//
-             const perspectiveCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            //***Camera***//
+            const perspectiveCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             const orthographicCamera = new THREE.OrthographicCamera(frustumSize * aspect / - 2, frustumSize * aspect / 2, frustumSize / 2, frustumSize / - 2, 1, 1000);
             orthographicCamera.position.z = 500;
             camera = perspectiveCamera;
@@ -194,14 +208,15 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
-           
+
 
             //***Actions***//
             //Slider
             const pointsMaterial = new THREE.PointsMaterial({ size: 0.5, color: 0xff0000 });
             const lineMaterial = new THREE.LineBasicMaterial({ color: 0x05c4bc, });
             //Shwing points within range
-            slider.addEventListener("input", updateGeometry);
+            rangeSiderEnd.addEventListener("input", updateGeometry);
+            rangeSiderStart.addEventListener("input", updateGeometry);
             //Checkbox
             const toggleLinesCheckbox = document.getElementById('toggleLines');
             const togglePointsCheckbox = document.getElementById('togglePoints');
@@ -214,6 +229,8 @@
                 points.visible = event.target.checked;
             });
 
+           
+
             //***Geometry data***//
             //Line
             const lineGeometry = new THREE.BufferGeometry().setFromPoints(toolpathData);
@@ -221,17 +238,19 @@
             scene.add(line);
             //Points
             const pointsGeometry = new THREE.BufferGeometry().setFromPoints([]);
-             points = new THREE.Points(pointsGeometry, pointsMaterial);
+            points = new THREE.Points(pointsGeometry, pointsMaterial);
             scene.add(points);
 
             updateGeometry();
         }
 
         function updateGeometry() {
-            const value = parseFloat(slider.value);
-            rangeLabel.textContent = `${Math.round(value * 100)}%`;
-            const endIndex = Math.floor(toolpathData.length * value);
-            const tempPoints = toolpathData.slice(0, endIndex);
+            const endValue = parseFloat(rangeSiderEnd.value);
+            const startValue = parseFloat(rangeSiderStart.value);
+            rangeLabel.textContent = `${Math.round(endValue * 100)}%`;
+            const startIndex = Math.floor(toolpathData.length * startValue);
+            const endIndex = Math.floor(toolpathData.length * endValue);
+            const tempPoints = toolpathData.slice( startIndex , endIndex);
 
             const lineGeometry = new THREE.BufferGeometry().setFromPoints(tempPoints);
             const pointsGeometry = new THREE.BufferGeometry().setFromPoints(tempPoints);
@@ -252,7 +271,7 @@
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
-            slider.ariaValueNow = 10;
+            rangeSiderEnd.ariaValueNow = 10;
             renderer.setSize(window.innerWidth, window.innerHeight);
 
             render();
@@ -263,12 +282,3 @@
 </body>
 
 </html>
-
-
-
-
-
-
-
-
-
