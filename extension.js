@@ -7,7 +7,7 @@ function activate(context) {
   console.log('Extension activated!');
   hoverInfoActivate(context);
   graphics(context);
-  nodes(context);
+ // nodes(context);
 }
 
 
