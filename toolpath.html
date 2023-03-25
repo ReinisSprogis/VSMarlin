@@ -32,20 +32,33 @@
         #labelZ {
             color: blue;
         }
+
+        #info {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            text-align: center;
+            z-index: 100;
+            display: block;
+        }
     </style>
 
 </head>
 
 
 <body>
-    <input type="range" id="rangeSlider" min="0" max="1" step="0.0001" value="1"
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+
+    <input type="range" id="rangeSlider" min="0" max="1" step="0.0001" value="0.01"
         style="position: absolute; top: 10px; left: 10px; width: 95%;">
     <label id="rangeLabel" style="position: absolute; top: 10px; left: 220px;">100%</label>
 
     <input type="checkbox" id="toggleLines" checked>
     <input type="checkbox" id="togglePoints" checked>
 
-    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <div id="datum">0.0</div>
 
     <script type="importmap">
   {
@@ -55,69 +68,169 @@
     }
   }
 </script>
+
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
         import { WebGLRenderer } from "three";
-        import { PointLight } from 'three';
-        import { MeshPhongMaterial } from 'three';
-        import { PlaneGeometry, Mesh, MeshBasicMaterial } from 'three';
-      //  import { MeshLine, MeshLineMaterial, MeshLineRaycast } from 'three/addons/MeshLine.js';
-        const frustumSize = 400;
-        let camera = null;
-        const aspect = window.innerWidth / window.innerHeight;
-        const scene = new THREE.Scene();
-        const perspectiveCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const orthographicCamera = new THREE.OrthographicCamera(frustumSize * aspect / - 2, frustumSize * aspect / 2, frustumSize / 2, frustumSize / - 2, 1, 1000);
-        orthographicCamera.position.z = 500;
-        camera = perspectiveCamera;
-        scene.background = new THREE.Color(0x565656);
+        import Stats from 'three/addons/libs/stats.module.js';
+        import { GPUStatsPanel } from 'three/addons/utils/GPUStatsPanel.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+        import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
+        import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
+        import { Line2 } from 'three/addons/lines/Line2.js';
+        import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 
-        //****Helpers****//
-        const size = 210;
-        const divisions = 10;
-        const gridHelper = new THREE.GridHelper(size, divisions);
-        gridHelper.position.y = size / 2;
-        gridHelper.position.x = size / 2;
-        gridHelper.rotation.x = 90 * (Math.PI / 180);
-        scene.add(gridHelper);
+        let line, thresholdLine, segments, thresholdSegments;
+        let renderer, scene, camera, controls;
+        let sphereInter, sphereOnLine;
+        let stats, gpuPanel;
+        let gui;
+        let clock;
+        let points;
 
-        const cameraHelper = new THREE.CameraHelper(camera);
-        // scene.add(cameraHelper);
-
-        const axesHelper = new THREE.AxesHelper(50);
-        scene.add(axesHelper);
-
-        //***Geometry data***//
-        const toolpathData = TOOLPATH_DATA_PLACEHOLDER;
         const slider = document.getElementById("rangeSlider");
         const rangeLabel = document.getElementById("rangeLabel");
+        const color = new THREE.Color();
+        const pointer = new THREE.Vector2(Infinity, Infinity);
+        const raycaster = new THREE.Raycaster();
+        const toolpathData = TOOLPATH_DATA_PLACEHOLDER;
 
-        const pointsMaterial = new THREE.PointsMaterial({ size: 0.5, color: 0xff0000 });
-        const lineMaterial = new THREE.LineBasicMaterial({ color: 0x05c4bc, linewidth: 10 });
-        //const mgeometry = new THREE.BufferGeometry().setFromPoints(points);
-      //  const mline = new MeshLine();
-     //   mline.setGeometry(mgeometry);
-      //  mline.setPoints(toolpathData);
-       // scene.add(mline);
-        //Shwing points within range
-        slider.addEventListener("input", updateGeometry);
+        raycaster.params.Line2 = {};
+        raycaster.params.Line2.threshold = 0;
 
-        const lineGeometry = new THREE.BufferGeometry().setFromPoints([]);
-        const line = new THREE.Line(lineGeometry, lineMaterial);
-        scene.add(line);
+        const matLine = new LineMaterial({
+            color: 0xffffff,
+            linewidth: 1, // in world units with size attenuation, pixels otherwise
+            worldUnits: true,
+            vertexColors: true,
+            //resolution: // to be set by renderer, eventually
+            alphaToCoverage: true,
+        });
 
-        const pointsGeometry = new THREE.BufferGeometry().setFromPoints([]);
-        const points = new THREE.Points(pointsGeometry, pointsMaterial);
-        scene.add(points);
+        const matThresholdLine = new LineMaterial({
+            color: 0xffffff,
+            linewidth: matLine.linewidth, // in world units with size attenuation, pixels otherwise
+            worldUnits: true,
+            // vertexColors: true,
+            transparent: true,
+            opacity: 0.2,
+            depthTest: false,
+            visible: false,
+            //resolution: // to be set by renderer, eventually
+
+        });
+
+        const params = {
+            'line type': 0,
+            'world units': matLine.worldUnits,
+            'visualize threshold': matThresholdLine.visible,
+            'width': matLine.linewidth,
+            'alphaToCoverage': matLine.alphaToCoverage,
+            'threshold': raycaster.params.Line2.threshold,
+            'translation': raycaster.params.Line2.threshold,
+            'animate': true
+        };
+
+        init();
+        animate();
+
+        function init() {
+            clock = new THREE.Clock();
+            const frustumSize = 400;
+            camera = null;
+            const aspect = window.innerWidth / window.innerHeight;
+           
+            //***Scene***//
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x565656);
+
+            //***Renderer***//
+            renderer = new THREE.WebGLRenderer({
+                powerPreference: "high-performance",
+                antialias: true,
+                stencil: false,
+                depth: false
+            });
+
+             //***Camera***//
+             const perspectiveCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const orthographicCamera = new THREE.OrthographicCamera(frustumSize * aspect / - 2, frustumSize * aspect / 2, frustumSize / 2, frustumSize / - 2, 1, 1000);
+            orthographicCamera.position.z = 500;
+            camera = perspectiveCamera;
+            camera.position.z = 75;
+            camera.position.y = (-105 * 2);
+            camera.position.x = 105;
+
+
+            //****Helpers****//
+            const size = 210;
+            const divisions = 10;
+            const gridHelper = new THREE.GridHelper(size, divisions);
+            gridHelper.position.y = size / 2;
+            gridHelper.position.x = size / 2;
+            gridHelper.rotation.x = 90 * (Math.PI / 180);
+            scene.add(gridHelper);
+            //const cameraHelper = new THREE.CameraHelper(camera);
+            // scene.add(cameraHelper);
+            const axesHelper = new THREE.AxesHelper(50);
+            scene.add(axesHelper);
+
+            //***Controls***//
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.target = new THREE.Vector3(105, 105, 0);
+            controls.enabled = true;
+            // Disable default left-click rotation
+            controls.mouseButtons.LEFT = null;
+            // Set middle-click to pan
+            controls.mouseButtons.MIDDLE = THREE.MOUSE.PAN;
+            // Set right-click to rotate
+            controls.mouseButtons.RIGHT = THREE.MOUSE.ROTATE;
+            controls.enableRotate = true;
+            // Enable zoom using the mouse scroll
+            controls.enableZoom = true;
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+           
+
+            //***Actions***//
+            //Slider
+            const pointsMaterial = new THREE.PointsMaterial({ size: 0.5, color: 0xff0000 });
+            const lineMaterial = new THREE.LineBasicMaterial({ color: 0x05c4bc, });
+            //Shwing points within range
+            slider.addEventListener("input", updateGeometry);
+            //Checkbox
+            const toggleLinesCheckbox = document.getElementById('toggleLines');
+            const togglePointsCheckbox = document.getElementById('togglePoints');
+
+            toggleLinesCheckbox.addEventListener('change', (event) => {
+                line.visible = event.target.checked;
+            });
+
+            togglePointsCheckbox.addEventListener('change', (event) => {
+                points.visible = event.target.checked;
+            });
+
+            //***Geometry data***//
+            //Line
+            const lineGeometry = new THREE.BufferGeometry().setFromPoints(toolpathData);
+            line = new THREE.Line(lineGeometry, lineMaterial);
+            scene.add(line);
+            //Points
+            const pointsGeometry = new THREE.BufferGeometry().setFromPoints([]);
+             points = new THREE.Points(pointsGeometry, pointsMaterial);
+            scene.add(points);
+
+            updateGeometry();
+        }
 
         function updateGeometry() {
             const value = parseFloat(slider.value);
             rangeLabel.textContent = `${Math.round(value * 100)}%`;
-
             const endIndex = Math.floor(toolpathData.length * value);
-
             const tempPoints = toolpathData.slice(0, endIndex);
 
             const lineGeometry = new THREE.BufferGeometry().setFromPoints(tempPoints);
@@ -125,55 +238,9 @@
 
             line.geometry.dispose();
             line.geometry = lineGeometry;
-
             points.geometry.dispose();
             points.geometry = pointsGeometry;
         }
-        updateGeometry();
-
-        const toggleLinesCheckbox = document.getElementById('toggleLines');
-        const togglePointsCheckbox = document.getElementById('togglePoints');
-
-        toggleLinesCheckbox.addEventListener('change', (event) => {
-            line.visible = event.target.checked;
-        });
-
-        togglePointsCheckbox.addEventListener('change', (event) => {
-            points.visible = event.target.checked;
-        });
-
-
-
-        // RENDERER AND CONTROLS
-        const renderer = new THREE.WebGLRenderer({
-            powerPreference: "high-performance",
-            antialias: true,
-            stencil: false,
-            depth: false
-        });
-
-
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.target = new THREE.Vector3(105, 105, 0);
-        controls.enabled = true;
-
-        // Disable default left-click rotation
-        controls.mouseButtons.LEFT = null;
-
-        // Set middle-click to pan
-        controls.mouseButtons.MIDDLE = THREE.MOUSE.PAN;
-
-        // Set right-click to rotate
-        controls.mouseButtons.RIGHT = THREE.MOUSE.ROTATE;
-        controls.enableRotate = true;
-
-        // Enable zoom using the mouse scroll
-        controls.enableZoom = true;
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
-        camera.position.z = 75;
-        camera.position.y = (-105 * 2);
-        camera.position.x = 105;
 
         function animate() {
             requestAnimationFrame(animate);
@@ -181,20 +248,27 @@
             renderer.render(scene, camera);
         }
 
-        animate();
-        window.addEventListener( 'resize', onWindowResize );
+        window.addEventListener('resize', onWindowResize);
         function onWindowResize() {
-
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
-
+            slider.ariaValueNow = 10;
             renderer.setSize(window.innerWidth, window.innerHeight);
 
             render();
-
         }
+
     </script>
 
 </body>
 
 </html>
+
+
+
+
+
+
+
+
+
