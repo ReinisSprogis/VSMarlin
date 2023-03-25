@@ -56,6 +56,12 @@
         "key": "ctrl+alt+n",
         "mac": "cmd+alt+s",
         "when": "editorTextFocus"
+      },
+      {
+        "command": "marlin.showFlutter",
+        "key": "ctrl+alt+f",
+        "mac": "cmd+alt+s",
+        "when": "editorTextFocus"
       }
     ],
     "languages": [

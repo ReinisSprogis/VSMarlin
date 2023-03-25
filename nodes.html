@@ -1,81 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nodes</title>
-  <script src="https://d3js.org/d3.v7.min.js"></script>
-  <style>
-    /* Add your custom styles here */
-    .node text {
-      pointer-events: none;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,height=device-height, initial-scale=1.0">
+    <title>Nodes</title>
+    <script src="vscode-resource:./webview.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* Add your custom styles here */
+        .node text {
+            pointer-events: none;
+        }
+    </style>
 </head>
+
 <body>
-  <div id="nodes-container">
-    <svg width="800" height="600"></svg>
-  </div>
+    <div id="nodes-container">
+        <svg width="100%" height="100%"></svg>
+    </div>
 
-  <script>
-    (function() {
-      const nodesData = JSON.parse('NODES_DATA_PLACEHOLDER');
-      
-      const svg = d3.select('svg');
-      const width = parseInt(svg.attr('width'));
-      const height = parseInt(svg.attr('height'));
+    <script>
+        (function () {
+            const nodesData = JSON.parse('NODES_DATA_PLACEHOLDER');
 
-      const g = svg.append('g');
+            const svg = d3.select('svg');
+            const width = parseInt(svg.attr('width'));
+            const height = parseInt(svg.attr('height'));
 
-      const nodes = g.selectAll('g.node')
-        .data(nodesData)
-        .enter()
-        .append('g')
-        .attr('class', 'node')
-        .attr('transform', (d, i) => `translate(${width / 2}, ${i * 30 + 20})`)
-        .call(d3.drag()
-          .on('start', dragstarted)
-          .on('drag', dragged)
-          .on('end', dragended)
-        );
+            const g = svg.append('g');
 
-      nodes.append('rect')
-        .attr('width', 200)
-        .attr('height', 20)
-        .attr('fill', d => d.type === 'parameter' ? 'lightblue' : 'lightgray');
+            // Create lines connecting the nodes
+            const lines = g.selectAll('line')
+                .data(nodesData.slice(1))
+                .enter()
+                .append('line')
+                .attr('stroke', 'black')
+                .attr('stroke-width', 1);
 
-      nodes.append('text')
-        .attr('x', 10)
-        .attr('y', 15)
-        .attr('font-size', 12)
-        .text(d => d.type === 'parameter' ? `${d.name}: ${d.value}` : d.value);
+            const nodes = g.selectAll('g.node')
+                .data(nodesData)
+                .enter()
+                .append('g')
+                .attr('class', 'node')
+                .attr('transform', (d, i) => `translate(${width / 2}, ${i * 30 + 20})`)
+                .call(d3.drag()
+                    .on('start', dragstarted)
+                    .on('drag', dragged)
+                    .on('end', dragended)
+                );
 
-      // Zoom behavior
-      const zoom = d3.zoom()
-        .scaleExtent([0.1, 10])
-        .on('zoom', (event) => {
-          g.attr('transform', event.transform);
-        });
+            nodes.append('rect')
+                .attr('width', 200)
+                .attr('height', 20)
+                .attr('fill', d => d.type === 'parameter' ? 'lightblue' : 'lightgray');
 
-      svg.call(zoom);
+            nodes.append('text')
+                .attr('x', 10)
+                .attr('y', 15)
+                .attr('font-size', 12)
+                .text(d => d.type === 'parameter' ? `${d.name}: ${d.value}` : d.value);
 
-      function dragstarted(event, d) {
-        d3.select(this).raise();
-        d.x = event.x;
-        d.y = event.y;
-      }
 
-      function dragged(event, d) {
-        d.x += event.dx;
-        d.y += event.dy;
-        d3.select(this).attr('transform', `translate(${d.x}, ${d.y})`);
-      }
+            // Zoom behavior
+            const zoom = d3.zoom()
+                .scaleExtent([0.1, 10])
+                .on('zoom', (event) => {
+                    g.attr('transform', event.transform);
+                });
 
-      function dragended(event, d) {
-        delete d.x;
-        delete d.y;
-      }
-    })();
-  </script>
+            svg.call(zoom);
+
+            function dragstarted(event, d) {
+                d3.select(this).raise();
+                d.x = event.x;
+                d.y = event.y;
+            }
+
+            function dragged(event, d) {
+                d.x += event.dx;
+                d.y += event.dy;
+                d3.select(this).attr('transform', `translate(${d.x}, ${d.y})`);
+                updateLines();
+            }
+
+            function dragended(event, d) {
+                delete d.x;
+                delete d.y;
+            }
+
+            function updateLines() {
+                lines.attr('x1', (d, i) => nodesData[i].x + 100)
+                    .attr('y1', (d, i) => nodesData[i].y + 10)
+                    .attr('x2', (d, i) => d.x + 100)
+                    .attr('y2', (d, i) => d.y + 10);
+            }
+
+            // Initialize lines
+            updateLines();
+
+        })();
+    </script>
 </body>
+
 </html>
