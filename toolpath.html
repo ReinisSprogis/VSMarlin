@@ -65,7 +65,6 @@
     <!-- Import maps polyfill -->
     <!-- Remove this when import maps will be widely supported -->
     <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
-    <div id="dropArea">Drop STL file here</div>
 
     <input type="range" id="rangeSliderEnd" min="0" max="1" step="0.00001" value="0.01"
         style="position: absolute; bottom: 5px; left: 10px; width: 95%;">
@@ -79,43 +78,67 @@
 
     <div id="datum">0.0</div>
     <div id="drop_zone">
-        <p>Drag one or more files to this <i>drop zone</i>.</p>
-    </div>
+        <div id="drop_zone" style="border: 5px solid blue; width: 200px; height: 100px; background-color: lightblue;">
+            <p>Drop STL file here</p>
+        </div>
 
-    <script>
-        const dropZone = document.getElementById('drop_zone');
+        <script>
+            const dropZone = document.getElementById('drop_zone');
+            window.addEventListener('dragenter', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+            });
 
-        dropZone.addEventListener('dragenter', (event) => {
-            event.preventDefault();
-        });
+            window.addEventListener('dragover', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+            });
 
-        dropZone.addEventListener('dragover', (event) => {
-            event.preventDefault();
-        });
+            window.addEventListener('dragleave', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+            });
 
-        dropZone.addEventListener('dragleave', (event) => {
-            event.preventDefault();
-        });
+            window.addEventListener('drop', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+            });
 
-        dropZone.addEventListener('drop', (event) => {
-            event.preventDefault();
-            const files = event.dataTransfer.files;
-            if (files.length > 0) {
-                handleFileUpload(files[0]);
+            dropZone.addEventListener('dragenter', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+            });
+
+            dropZone.addEventListener('dragover', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+            });
+
+            dropZone.addEventListener('dragleave', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+            });
+
+            dropZone.addEventListener('drop', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                const files = event.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileUpload(files[0]);
+                }
+            });
+
+            function handleFileUpload(file) {
+                console.log(`File dropped: ${file.name}`);
+                // Pass the file to the handleFileUpload function in the module script
+                handleFileUploadInModule(file);
             }
-        });
-
-        function handleFileUpload(file) {
-            console.log(`File dropped: ${file.name}`);
-            // Pass the file to the handleFileUpload function in the module script
-            handleFileUploadInModule(file);
-        }
-    </script>
+        </script>
 
 
 
 
-    <script type="importmap">
+        <script type="importmap">
   {
     "imports": {
       "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
@@ -124,223 +147,222 @@
   }
 </script>
 
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
-        import { WebGLRenderer } from "three";
-        import Stats from 'three/addons/libs/stats.module.js';
-        import { GPUStatsPanel } from 'three/addons/utils/GPUStatsPanel.js';
-        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
-        import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
-        import { STLLoader } from 'three/addons/loaders/STLLoader.js';
-        import { TransformControls } from 'three/addons/controls/TransformControls.js';
+        <script type="module">
+            import * as THREE from 'three';
+            import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+            import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+            import { WebGLRenderer } from "three";
+            import Stats from 'three/addons/libs/stats.module.js';
+            import { GPUStatsPanel } from 'three/addons/utils/GPUStatsPanel.js';
+            import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+            import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
+            import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+            import { TransformControls } from 'three/addons/controls/TransformControls.js';
 
-        let line, thresholdLine, segments, thresholdSegments;
-        let renderer, scene, camera, controls, transformControls;
-        let stats, gpuPanel;
-        let gui;
-        let points, models, mesh;
-        let stlLoader;
+            let line, thresholdLine, segments, thresholdSegments;
+            let renderer, scene, camera, controls, transformControls;
+            let stats, gpuPanel;
+            let gui;
+            let points, models, mesh;
+            let stlLoader;
 
-        const rangeSiderEnd = document.getElementById("rangeSliderEnd");
-        const rangeSiderStart = document.getElementById("rangeSliderStart");
-        const rangeLabel = document.getElementById("rangeLabel");
+            const rangeSiderEnd = document.getElementById("rangeSliderEnd");
+            const rangeSiderStart = document.getElementById("rangeSliderStart");
+            const rangeLabel = document.getElementById("rangeLabel");
 
-        const toolpathData = TOOLPATH_DATA_PLACEHOLDER;
+            const toolpathData = TOOLPATH_DATA_PLACEHOLDER;
 
 
-        init();
-        animate();
+            init();
+            animate();
 
-        // Add this function to your module script
-        window.handleFileUploadInModule = function (file) {
-            console.log(`Handling file upload in module: ${file.name}`);
-           
-            stlLoader = new STLLoader();
-            stlLoader.load(URL.createObjectURL(file), function (geometry) {
-                const material = new THREE.MeshPhongMaterial({
-                    color: 0xaaaaaa,
-                    specular: 0x111111,
-                    shininess: 200
+            // Add this function to your module script
+            window.handleFileUploadInModule = function (file) {
+                console.log(`Handling file upload in module: ${file.name}`);
+
+                stlLoader = new STLLoader();
+                stlLoader.load(URL.createObjectURL(file), function (geometry) {
+                    const material = new THREE.MeshPhongMaterial({
+                        color: 0xaaaaaa,
+                        specular: 0x111111,
+                        shininess: 200
+                    });
+                    mesh = new THREE.Mesh(geometry, material);
+                    mesh.position.set(105, 105, 0);
+                    mesh.rotation.set(0, 0, 0);
+                    mesh.scale.set(1, 1, 1);
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+                    // transformControls.attach(mesh);
+                    scene.add(mesh);
                 });
-                 mesh = new THREE.Mesh(geometry, material);
-                mesh.position.set(105, 105, 0);
-                mesh.rotation.set(0, 0, 0);
-                mesh.scale.set(1, 1, 1);
-                mesh.castShadow = true;
-                mesh.receiveShadow = true;
-                scene.add(mesh);
-            });
-        };
+            };
 
 
-        function init() {
+            function init() {
 
-            const frustumSize = 400;
-            camera = null;
-            const aspect = window.innerWidth / window.innerHeight;
+                const frustumSize = 400;
+                camera = null;
+                const aspect = window.innerWidth / window.innerHeight;
 
-            //***Scene***//
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x565656);
+                //***Scene***//
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x565656);
 
-            //***Renderer***//
-            renderer = new THREE.WebGLRenderer({
-                powerPreference: "high-performance",
-                antialias: true,
-                stencil: false,
-                depth: false,
-                alpha: true,
-            });
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.setClearColor(0x000000, 0.0);
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.body.appendChild(renderer.domElement);
-            //Prevent default drag and drop
-            renderer.domElement.addEventListener("dragover", function (event) {
-                event.preventDefault();
-            }, false);
-
-
-            //***Camera***//
-            const perspectiveCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            const orthographicCamera = new THREE.OrthographicCamera(frustumSize * aspect / - 2, frustumSize * aspect / 2, frustumSize / 2, frustumSize / - 2, 1, 1000);
-            orthographicCamera.position.z = 500;
-            camera = perspectiveCamera;
-            camera.position.z = 75;
-            camera.position.y = (-105 * 2);
-            camera.position.x = 105;
+                //***Renderer***//
+                renderer = new THREE.WebGLRenderer({
+                    powerPreference: "high-performance",
+                    antialias: true,
+                    stencil: false,
+                    depth: false,
+                    alpha: true,
+                });
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setClearColor(0x000000, 0.0);
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                document.body.appendChild(renderer.domElement);
 
 
 
 
-            //****Helpers****//
-            const size = 210;
-            const divisions = 10;
-            const gridHelper = new THREE.GridHelper(size, divisions);
-            gridHelper.position.y = size / 2;
-            gridHelper.position.x = size / 2;
-            gridHelper.rotation.x = 90 * (Math.PI / 180);
-            scene.add(gridHelper);
-            //const cameraHelper = new THREE.CameraHelper(camera);
-            // scene.add(cameraHelper);
-            const axesHelper = new THREE.AxesHelper(50);
-            scene.add(axesHelper);
+                //***Camera***//
+                const perspectiveCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                const orthographicCamera = new THREE.OrthographicCamera(frustumSize * aspect / - 2, frustumSize * aspect / 2, frustumSize / 2, frustumSize / - 2, 1, 1000);
+                orthographicCamera.position.z = 500;
+                camera = perspectiveCamera;
+                camera.position.z = 75;
+                camera.position.y = (-105 * 2);
+                camera.position.x = 105;
 
 
 
 
-            //***Controls***//
-            controls = new OrbitControls(camera, renderer.domElement);
-            controls.target = new THREE.Vector3(105, 105, 0);
-            controls.enabled = true;
-            // Disable default left-click rotation
-            controls.mouseButtons.LEFT = null;
-            // Set middle-click to pan
-            controls.mouseButtons.MIDDLE = THREE.MOUSE.PAN;
-            // Set right-click to rotate
-            controls.mouseButtons.RIGHT = THREE.MOUSE.ROTATE;
-            controls.enableRotate = true;
-            // Enable zoom using the mouse scroll
-            controls.enableZoom = true;
-
-
-            transformControls = new TransformControls(camera, renderer.domElement);
-            transformControls.addEventListener('change', render);
-
-            transformControls.addEventListener('dragging-changed', function (event) {
-
-                OrbitControls.enabled = ! event.value
-
-            });
-            transformControls.attach(mesh);
-            scene.add(transformControls);
-
-            //***Actions***//
-            //Slider
-            const pointsMaterial = new THREE.PointsMaterial({ size: 0.5, color: 0xff0000 });
-            const lineMaterial = new THREE.LineBasicMaterial({ color: 0x05c4bc, });
-            //Shwing points within range
-            rangeSiderEnd.addEventListener("input", updateGeometry);
-            rangeSiderStart.addEventListener("input", updateGeometry);
-            //Checkbox
-            const toggleLinesCheckbox = document.getElementById('toggleLines');
-            const togglePointsCheckbox = document.getElementById('togglePoints');
-
-            toggleLinesCheckbox.addEventListener('change', (event) => {
-                line.visible = event.target.checked;
-            });
-
-            togglePointsCheckbox.addEventListener('change', (event) => {
-                points.visible = event.target.checked;
-            });
+                //****Helpers****//
+                const size = 210;
+                const divisions = 10;
+                const gridHelper = new THREE.GridHelper(size, divisions);
+                gridHelper.position.y = size / 2;
+                gridHelper.position.x = size / 2;
+                gridHelper.rotation.x = 90 * (Math.PI / 180);
+                scene.add(gridHelper);
+                //const cameraHelper = new THREE.CameraHelper(camera);
+                // scene.add(cameraHelper);
+                const axesHelper = new THREE.AxesHelper(50);
+                scene.add(axesHelper);
 
 
 
-            //***Geometry data***//
-            //Line
-            const lineGeometry = new THREE.BufferGeometry().setFromPoints(toolpathData);
-            line = new THREE.Line(lineGeometry, lineMaterial);
-            scene.add(line);
-            //Points
-            const pointsGeometry = new THREE.BufferGeometry().setFromPoints(toolpathData);
-            points = new THREE.Points(pointsGeometry, pointsMaterial);
-            scene.add(points);
 
-            updateGeometry();
-        }
+                //***Controls***//
+                controls = new OrbitControls(camera, renderer.domElement);
+                controls.target = new THREE.Vector3(105, 105, 0);
+                controls.enabled = true;
+                // Disable default left-click rotation
+                controls.mouseButtons.LEFT = null;
+                // Set middle-click to pan
+                controls.mouseButtons.MIDDLE = THREE.MOUSE.PAN;
+                // Set right-click to rotate
+                controls.mouseButtons.RIGHT = THREE.MOUSE.ROTATE;
+                controls.enableRotate = true;
+                // Enable zoom using the mouse scroll
+                controls.enableZoom = true;
 
-        function updateGeometry() {
-            const endValue = parseFloat(rangeSiderEnd.value);
-            const startValue = parseFloat(rangeSiderStart.value);
-            if (endValue <= startValue) {
-                rangeSiderEnd.value = startValue ;
-                return;
-            } else
-                if (startValue >= endValue) {
-                    rangeSiderStart.value = endValue;
+
+                transformControls = new TransformControls(camera, renderer.domElement);
+                transformControls.addEventListener('change', render);
+
+                transformControls.addEventListener('dragging-changed', function (event) {
+
+                    OrbitControls.enabled = !event.value
+
+                });
+                //transformControls.attach(mesh);
+                scene.add(transformControls);
+
+                //***Actions***//
+                //Slider
+                const pointsMaterial = new THREE.PointsMaterial({ size: 0.5, color: 0xff0000 });
+                const lineMaterial = new THREE.LineBasicMaterial({ color: 0x05c4bc, });
+                //Shwing points within range
+                rangeSiderEnd.addEventListener("input", updateGeometry);
+                rangeSiderStart.addEventListener("input", updateGeometry);
+                //Checkbox
+                const toggleLinesCheckbox = document.getElementById('toggleLines');
+                const togglePointsCheckbox = document.getElementById('togglePoints');
+
+                toggleLinesCheckbox.addEventListener('change', (event) => {
+                    line.visible = event.target.checked;
+                });
+
+                togglePointsCheckbox.addEventListener('change', (event) => {
+                    points.visible = event.target.checked;
+                });
+
+
+
+                //***Geometry data***//
+                //Line
+                const lineGeometry = new THREE.BufferGeometry().setFromPoints(toolpathData);
+                line = new THREE.Line(lineGeometry, lineMaterial);
+                scene.add(line);
+                //Points
+                const pointsGeometry = new THREE.BufferGeometry().setFromPoints(toolpathData);
+                points = new THREE.Points(pointsGeometry, pointsMaterial);
+                scene.add(points);
+
+                updateGeometry();
+            }
+
+            function updateGeometry() {
+                const endValue = parseFloat(rangeSiderEnd.value);
+                const startValue = parseFloat(rangeSiderStart.value);
+                if (endValue <= startValue) {
+                    rangeSiderEnd.value = startValue;
                     return;
-                }
+                } else
+                    if (startValue >= endValue) {
+                        rangeSiderStart.value = endValue;
+                        return;
+                    }
 
-            rangeLabel.textContent = `${Math.round(endValue * 100)}%`;
-            const startIndex = Math.floor(toolpathData.length * startValue);
-            const endIndex = Math.floor(toolpathData.length * endValue);
-            const tempPoints = toolpathData.slice(startIndex, endIndex);
+                rangeLabel.textContent = `${Math.round(endValue * 100)}%`;
+                const startIndex = Math.floor(toolpathData.length * startValue);
+                const endIndex = Math.floor(toolpathData.length * endValue);
+                const tempPoints = toolpathData.slice(startIndex, endIndex);
 
-            const lineGeometry = new THREE.BufferGeometry().setFromPoints(tempPoints);
-            const pointsGeometry = new THREE.BufferGeometry().setFromPoints(tempPoints);
+                const lineGeometry = new THREE.BufferGeometry().setFromPoints(tempPoints);
+                const pointsGeometry = new THREE.BufferGeometry().setFromPoints(tempPoints);
 
-            line.geometry.dispose();
-            line.geometry = lineGeometry;
-            points.geometry.dispose();
-            points.geometry = pointsGeometry;
-        }
+                line.geometry.dispose();
+                line.geometry = lineGeometry;
+                points.geometry.dispose();
+                points.geometry = pointsGeometry;
+            }
 
-        function animate() {
-            requestAnimationFrame(animate);
+            function animate() {
+                requestAnimationFrame(animate);
 
-            controls.update();
-            renderer.render(scene, camera);
-        }
+                controls.update();
+                renderer.render(scene, camera);
+            }
 
-        function render() {
+            function render() {
 
-        renderer.render( scene, camera );
+                renderer.render(scene, camera);
 
-        }
+            }
 
-        window.addEventListener('resize', onWindowResize);
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            rangeSiderEnd.ariaValueNow = 10;
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            window.addEventListener('resize', onWindowResize);
+            function onWindowResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                rangeSiderEnd.ariaValueNow = 10;
+                renderer.setSize(window.innerWidth, window.innerHeight);
 
-            render();
-        }
+                render();
+            }
 
-    </script>
+        </script>
 
 </body>
 
