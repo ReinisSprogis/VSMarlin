@@ -81,22 +81,22 @@
     <div id="drop_zone">
         <p>Drag one or more files to this <i>drop zone</i>.</p>
     </div>
-    
+
     <script>
         const dropZone = document.getElementById('drop_zone');
-    
+
         dropZone.addEventListener('dragenter', (event) => {
             event.preventDefault();
         });
-    
+
         dropZone.addEventListener('dragover', (event) => {
             event.preventDefault();
         });
-    
+
         dropZone.addEventListener('dragleave', (event) => {
             event.preventDefault();
         });
-    
+
         dropZone.addEventListener('drop', (event) => {
             event.preventDefault();
             const files = event.dataTransfer.files;
@@ -104,14 +104,14 @@
                 handleFileUpload(files[0]);
             }
         });
-    
+
         function handleFileUpload(file) {
             console.log(`File dropped: ${file.name}`);
             // Pass the file to the handleFileUpload function in the module script
             handleFileUploadInModule(file);
         }
     </script>
-    
+
 
 
 
@@ -134,12 +134,13 @@
         import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
         import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
         import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+        import { TransformControls } from 'three/addons/controls/TransformControls.js';
 
         let line, thresholdLine, segments, thresholdSegments;
-        let renderer, scene, camera, controls;
+        let renderer, scene, camera, controls, transformControls;
         let stats, gpuPanel;
         let gui;
-        let points;
+        let points, models, mesh;
         let stlLoader;
 
         const rangeSiderEnd = document.getElementById("rangeSliderEnd");
@@ -152,25 +153,26 @@
         init();
         animate();
 
-// Add this function to your module script
-window.handleFileUploadInModule = function (file) {
-    console.log(`Handling file upload in module: ${file.name}`);
-    stlLoader = new STLLoader();
-    stlLoader.load(URL.createObjectURL(file), function (geometry) {
-        const material = new THREE.MeshPhongMaterial({
-            color: 0xaaaaaa,
-            specular: 0x111111,
-            shininess: 200
-        });
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.set(0, 0, 0);
-        mesh.rotation.set(0, 0, 0);
-        mesh.scale.set(1, 1, 1);
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-        scene.add(mesh);
-    });
-};
+        // Add this function to your module script
+        window.handleFileUploadInModule = function (file) {
+            console.log(`Handling file upload in module: ${file.name}`);
+           
+            stlLoader = new STLLoader();
+            stlLoader.load(URL.createObjectURL(file), function (geometry) {
+                const material = new THREE.MeshPhongMaterial({
+                    color: 0xaaaaaa,
+                    specular: 0x111111,
+                    shininess: 200
+                });
+                 mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(105, 105, 0);
+                mesh.rotation.set(0, 0, 0);
+                mesh.scale.set(1, 1, 1);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                scene.add(mesh);
+            });
+        };
 
 
         function init() {
@@ -211,6 +213,8 @@ window.handleFileUploadInModule = function (file) {
             camera.position.x = 105;
 
 
+
+
             //****Helpers****//
             const size = 210;
             const divisions = 10;
@@ -242,7 +246,16 @@ window.handleFileUploadInModule = function (file) {
             controls.enableZoom = true;
 
 
+            transformControls = new TransformControls(camera, renderer.domElement);
+            transformControls.addEventListener('change', render);
 
+            transformControls.addEventListener('dragging-changed', function (event) {
+
+                OrbitControls.enabled = ! event.value
+
+            });
+            transformControls.attach(mesh);
+            scene.add(transformControls);
 
             //***Actions***//
             //Slider
@@ -271,7 +284,7 @@ window.handleFileUploadInModule = function (file) {
             line = new THREE.Line(lineGeometry, lineMaterial);
             scene.add(line);
             //Points
-            const pointsGeometry = new THREE.BufferGeometry().setFromPoints([]);
+            const pointsGeometry = new THREE.BufferGeometry().setFromPoints(toolpathData);
             points = new THREE.Points(pointsGeometry, pointsMaterial);
             scene.add(points);
 
@@ -282,11 +295,11 @@ window.handleFileUploadInModule = function (file) {
             const endValue = parseFloat(rangeSiderEnd.value);
             const startValue = parseFloat(rangeSiderStart.value);
             if (endValue <= startValue) {
-                rangeSiderEnd.value = startValue + 0.001;
+                rangeSiderEnd.value = startValue ;
                 return;
             } else
                 if (startValue >= endValue) {
-                    rangeSiderStart.value = endValue - 0.001;
+                    rangeSiderStart.value = endValue;
                     return;
                 }
 
@@ -311,7 +324,11 @@ window.handleFileUploadInModule = function (file) {
             renderer.render(scene, camera);
         }
 
+        function render() {
 
+        renderer.render( scene, camera );
+
+        }
 
         window.addEventListener('resize', onWindowResize);
         function onWindowResize() {
