@@ -180,6 +180,7 @@
         import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
         import { STLLoader } from 'three/addons/loaders/STLLoader.js';
         import { TransformControls } from 'three/addons/controls/TransformControls.js';
+        import { VertexNormalsHelper } from 'three/addons/helpers/VertexNormalsHelper.js';
 
         let line, thresholdLine, segments, thresholdSegments;
         let renderer, scene, camera, controls, transformControls;
@@ -197,28 +198,32 @@
 
         init();
         animate();
-
+        const light = new THREE.AmbientLight(0x404040); // soft white light
+        scene.add(light);
+        const directionalLight = new THREE.DirectionalLight(0xffffff);
+        scene.add(directionalLight);
         // Add this function to your module script
         window.handleFileUploadInModule = function (file) {
             console.log(`Handling file upload in module: ${file.name}`);
 
             stlLoader = new STLLoader();
             stlLoader.load(URL.createObjectURL(file), function (geometry) {
-                const material = new THREE.MeshPhongMaterial({
-                    color: 0xaaaaaa,
-                    specular: 0x111111,
-                    shininess: 200
-                });
+
+                const material = new  THREE.MeshStandardMaterial({color: 0x0ED5F1, side: THREE.DoubleSide})
                 mesh = new THREE.Mesh(geometry, material);
+               // mesh.material.depthWrite = false;
+    
                 mesh.position.set(105, 105, 0);
-                mesh.rotation.set(0, 0, 0);
+                mesh.rotation.set(-180, 0, 0);
                 mesh.scale.set(1, 1, 1);
-                mesh.castShadow = true;
-                mesh.receiveShadow = true;
-                // transformControls.attach(mesh);
+                transformControls.attach(mesh);
+                const helper = new VertexNormalsHelper(mesh, 1, 0xff0000);
+               // scene.add(helper);
                 scene.add(mesh);
             });
         };
+
+
 
 
         function init() {
@@ -236,8 +241,9 @@
                 powerPreference: "high-performance",
                 antialias: true,
                 stencil: false,
-                depth: false,
+                depth: true,
                 alpha: true,
+                depthBufferType: THREE.FloatType,
             });
             renderer.setPixelRatio(window.devicePixelRatio);
             renderer.setClearColor(0x000000, 0.0);
@@ -288,17 +294,19 @@
             controls.enableRotate = true;
             // Enable zoom using the mouse scroll
             controls.enableZoom = true;
-
+          //  controls.rotateSpeed *= -1;
+         
 
             transformControls = new TransformControls(camera, renderer.domElement);
             transformControls.addEventListener('change', render);
+            transformControls.mode = 'rotate'
 
             transformControls.addEventListener('dragging-changed', function (event) {
 
                 OrbitControls.enabled = !event.value
 
             });
-            //transformControls.attach(mesh);
+          
             scene.add(transformControls);
 
             //***Actions***//
