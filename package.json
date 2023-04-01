@@ -2,7 +2,7 @@
   "name": "marlin",
   "displayName": "marlin",
   "description": "3D printing G-code Marlin support",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.76.0"
   },
@@ -26,6 +26,7 @@
     }
   ],
   "contributes": {
+   
     "commands": [
       {
         "command": "marlin.showToolpath",
@@ -83,7 +84,7 @@
     "snippets": [
       {
         "language": "marlin",
-        "path": "/snippets/snippets.json"
+        "path": "snippets\\gcode_snippets.json"
       }
     ],
     "grammars": [

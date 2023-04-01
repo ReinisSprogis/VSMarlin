@@ -1,0 +1,1496 @@
+
+{
+    "categories": ["Snippets"],
+
+    "Linear Rapid Move":{
+        "prefix": "G0",
+        "body": [
+            "G0 X${1:0} Y${2:0} Z${3:0}"
+        ]
+    },
+    "Linear Feedrate Move":{
+        "prefix": "G1",
+        "body": [
+            "G1 X${1:0} Y${2:0} Z${3:0} "
+        ]
+    },
+    "Clockwise Arc Move":{
+        "prefix": "G2",
+        "body": [
+            "G2 X${1:0} Y${2:0} Z${3:0} I${4:0} J${5:0} F${6:0}"
+        ]
+    },
+    "Counter-Clockwise Arc Move":{
+        "prefix": "G3",
+        "body": [
+            "G3 X${1:0} Y${2:0} Z${3:0} I${4:0} J${5:0} F${6:0}"
+        ]
+    },
+    " Dwell":{
+        "prefix": "G4",
+        "body": [
+            "G4 P${1:0}"
+        ]
+    },
+    " Bézier cubic spline":{
+        "prefix": "G5",
+        "body": [
+            "G5 X${1:0} Y${2:0} Z${3:0} I${4:0} J${5:0} P${6:0} Q${7:0} R${8:0} S${9:0} T${10:0} U${11:0} V${12:0} W${13:0} F${14:0}"
+        ]
+    },
+    "Direct Stepper Move":{
+        "prefix": "G6",
+        "body": [
+            "G6 X${1:0} Y${2:0} Z${3:0} E${4:0} F${5:0}"
+        ]
+    },
+    "Retract":{
+        "prefix": "G10",
+        "body": [
+            "G10"
+        ]
+    },
+    "Recover":{
+        "prefix": "G11",
+        "body": [
+            "G11"
+        ]
+    },
+    "Clean the Nozzle":{
+        "prefix": "G12",
+        "body": [
+            "G12"
+        ]
+    },
+    "Select Plane XY":{
+        "prefix": "G17",
+        "body": [
+            "G17"
+        ]
+    },
+    "Select Plane ZX":{
+        "prefix": "G18",
+        "body": [
+            "G18"
+        ]
+    },
+    "Select Plane YZ":{
+        "prefix": "G19",
+        "body": [
+            "G19"
+        ]
+    },
+    "Set Units to Inches":{
+        "prefix": "G20",
+        "body": [
+            "G20"
+        ]
+    },
+    "Set Units to Millimeters":{
+        "prefix": "G21",
+        "body": [
+            "G21"
+        ]
+    },
+    "Mesh Validation Pattern":{
+        "prefix": "G26",
+        "body": [
+            "G26"
+        ]
+    },
+    "Park toolhead":{
+        "prefix": "G27",
+        "body": [
+            "G27"
+        ]
+    },
+    "Auto Home":{
+        "prefix": "G28",
+        "body": [
+            "G28"
+        ]
+    },
+    "Bed Leveling":{
+        "prefix": "G29",
+        "body": [
+            "G29"
+        ]
+    },
+    "Single Z-Probe":{
+        "prefix": "G30",
+        "body": [
+            "G30"
+        ]
+    },
+    "Dock Sled":{
+        "prefix": "G31",
+        "body": [
+            "G31"
+        ]
+    },
+    "Undock Sled":{
+        "prefix": "G32",
+        "body": [
+            "G32"
+        ]
+    },
+    "Delta Auto Calibration":{
+        "prefix": "G33",
+        "body": [
+            "G33"
+        ]
+    },
+    "Z Steppers Auto-Alignment":{
+        "prefix": "G34",
+        "body": [
+            "G34"
+        ]
+    },
+    "Tramming Assistant":{
+        "prefix": "G35",
+        "body": [
+            "G35"
+        ]
+    },
+    "Probe target 2":{
+        "prefix": "G38.2",
+        "description": "G38.2 - ",
+        "body": [
+            "G38.2 X${1:0} Y${2:0} Z${3:0} F${4:0}"
+        ]
+    },
+    "Probe target 3":{
+        "prefix": "G38.3",
+        "body": [
+            "G38.3 X${1:0} Y${2:0} Z${3:0} F${4:0}"
+        ]
+    },
+    "Probe target 4":{
+        "prefix": "G38.4",
+        "body": [
+            "G38.4 X${1:0} Y${2:0} Z${3:0} F${4:0}"
+        ]
+    },
+    "Probe target 5":{
+        "prefix": "G38.5",
+        "body": [
+            "G38.5 X${1:0} Y${2:0} Z${3:0} F${4:0}"
+        ]
+    },
+    "Move to mesh coordinate":{
+        "prefix": "G42",
+        "body": [
+            "G42"
+        ]
+    },
+    "Move in Machine Coordinates": {
+        "prefix": "G53",
+        "body": [
+            "G53"
+        ]
+    },
+    "Workspace coordinate system 1": {
+        "prefix": "G54",
+        "body": [
+            "G54"
+        ]
+    },
+    "Workspace coordinate system 2": {
+        "prefix": "G55",
+        "body": [
+            "G55"
+        ]
+    },
+    "Workspace coordinate system 3": {
+        "prefix": "G56",
+        "body": [
+            "G56"
+        ]
+    },
+    "Workspace coordinate system 4": {
+        "prefix": "G57",
+        "body": [
+            "G57"
+        ]
+    },
+    "Workspace coordinate system 5": {
+        "prefix": "G58",
+        "body": [
+            "G58"
+        ]
+    },
+    "Workspace coordinate system 6": {
+        "prefix": "G59",
+        "body": [
+            "G59"
+        ]
+    },
+    "Workspace coordinate system 7": {
+        "prefix": "G59.1",
+    
+        "body": [
+            "G59.1"
+        ]
+    },
+    "Workspace coordinate system 8": {
+        "prefix": "G59.2",
+    
+        "body": [
+            "G59.2"
+        ]
+    },
+    "Workspace coordinate system 9": {
+        "prefix": "G59.3",
+    
+        "body": [
+            "G59.3"
+        ]
+    },
+    "Save current position": {
+        "prefix": "G60",
+        "description": "G60 - ",
+        "body": [
+            "G60"
+        ]
+    },
+    "Return to saved position": {
+        "prefix": "G61",
+        "body": [
+            "G61"
+        ]
+    },
+    "Probe temperature calibration": {
+        "prefix": "G76",
+        "body": [
+            "G76"
+        ]
+    },
+    "Cancel current motion mode": {
+        "prefix": "G80",
+        "body": [
+            "G80"
+        ]
+    },
+    "Absolute positioning": {
+        "prefix": "G90",
+        "body": [
+            "G90"
+        ]
+    },
+    "Relative positioning": {
+        "prefix": "G91",
+        "body": [
+            "G91"
+        ]
+    },
+    "Set position": {
+        "prefix": "G92",
+        "body": [
+            "G92"
+        ]
+    },
+    "Backlash Calibration": {
+        "prefix": "G425",
+        "body": [
+            "G425"
+        ]
+    },
+    "Uncoditional stop": {
+        "prefix": "M0",
+        "body": [
+            "M0"
+        ]
+    },
+    "Unconditional stop": {
+        "prefix": "M1",
+        "body": [
+            "M1"
+        ]
+    },
+    "Spindle on clockwise / Laser on": {
+        "prefix": "M3",
+        "body": [
+            "M3"
+        ]
+    },
+    "Spindle on counter-clockwise / Laser on": {
+        "prefix": "M4",
+        "body": [
+            "M4"
+        ]
+    },
+    "Spindle off / Laser off": {
+        "prefix": "M5",
+        "body": [
+            "M5"
+        ]
+    },
+    "Turn on mist coolant": {
+        "prefix": "M7",
+        "body": [
+            "M7"
+        ]
+    },
+    "Turn on spindle flood coolant or laser air assist": {
+        "prefix": "M8",
+        "body": [
+            "M8"
+        ]
+    },
+    "Coolant control": {
+        "prefix": "M9",
+        "body": [
+            "M9"
+        ]
+    },
+    "Turn laser blower motor on": {
+        "prefix": "M10",
+        "body": [
+            "M10"
+        ]
+    },
+    "Turn laser blower motor off": {
+        "prefix": "M11",
+        "body": [
+            "M11"
+        ]
+    },
+    "Expected Printer Check": {
+        "prefix": "M16",
+        "body": [
+            "M16"
+        ]
+    },
+    
+        "Enable Steppers": {
+            "prefix": "M17",
+            "body": [
+                "M17"
+            ]
+        },
+        "Disable Steppers": {
+            "prefix": "M18",
+            "body": [
+                "M18"
+            ]
+        },
+        "List SD Card": {
+            "prefix": "M20",
+            "body": [
+                "M20"
+            ]
+        },
+        "Init SD card": {
+            "prefix": "M21",
+            "body": [
+                "M21"
+            ]
+        },
+        "Release SD card": {
+            "prefix": "M22",
+            "body": [
+                "M22"
+            ]
+        },
+        "Select SD file": {
+            "prefix": "M23",
+            "body": [
+                "M23"
+            ]
+        },
+        "Start or Resume SD print": {
+            "prefix": "M24",
+            "body": [
+                "M24"
+            ]
+        },
+        "Pause SD print": {
+            "prefix": "M25",
+            "body": [
+                "M25"
+            ]
+        },
+        "Set SD position": {
+            "prefix": "M26",
+            "body": [
+                "M26"
+            ]
+        },
+        "Report SD print status": {
+            "prefix": "M27",
+            "body": [
+                "M27"
+            ]
+        },
+        "Start SD write": {
+            "prefix": "M28",
+            "body": [
+                "M28"
+            ]
+        },
+        "Stop SD write": {
+            "prefix": "M29",
+            "body": [
+                "M29"
+            ]
+        },
+        "Delete SD file": {
+            "prefix": "M30",
+            "body": [
+                "M30"
+            ]
+        },
+        "Print time": {
+            "prefix": "M31",
+            "body": [
+                "M31"
+            ]
+        },
+        "Select and Start": {
+            "prefix": "M32",
+            "body": [
+                "M32"
+            ]
+        },
+        "Get Long Path": {
+            "prefix": "M33",
+            "body": [
+                "M33"
+            ]
+        },
+        "SDCard Sorting": {
+            "prefix": "M34",
+            "body": [
+                "M34"
+            ]
+        },
+        "Set Pin State": {
+            "prefix": "M42",
+            "body": [
+                "M42"
+            ]
+        },
+        "Debug Pins": {
+            "prefix": "M43",
+            "body": [
+                "M43"
+            ]
+        },
+        "Toggle Pins": {
+            "prefix": "M43 T",
+            "body": [
+                "M43 T"
+            ]
+        },
+        "Probe Repeatability Test": {
+            "prefix": "M48",
+            "body": [
+                "M48"
+            ]
+        },
+        "Set Print Progress": {
+            "prefix": "M73",
+            "body": [
+                "M73"
+            ]
+        },
+        "Start Print Job Timer": {
+            "prefix": "M75",
+            "body": [
+                "M75"
+            ]
+        },
+        "Pause Print Job Timer": {
+            "prefix": "M76",
+            "body": [
+                "M76"
+            ]
+        },
+        "Stop Print Job Timer": {
+            "prefix": "M77",
+            "body": [
+                "M77"
+            ]
+        },"Print Job Stats": {
+            "prefix": "M78",
+            "body": [
+                "M78"
+            ]
+        },
+        "Power On": {
+            "prefix": "M80",
+            "body": [
+                "M80"
+            ]
+        },
+        "Power Off": {
+            "prefix": "M81",
+            "body": [
+                "M81"
+            ]
+        },
+        "E Absolute": {
+            "prefix": "M82",
+            "body": [
+                "M82"
+            ]
+        },
+        "E Relative": {
+            "prefix": "M83",
+            "body": [
+                "M83"
+            ]
+        },
+        "Inactivity Shutdown": {
+            "prefix": "M85",
+            "body": [
+                "M85"
+            ]
+        },
+        "Set Axis Steps-per-unit": {
+            "prefix": "M92",
+            "body": [
+                "M92"
+            ]
+        },
+        "Free Memory": {
+            "prefix": "M100",
+            "body": [
+                "M100"
+            ]
+        },
+        "Configure Bed Distance Sensor": {
+            "prefix": "M102",
+            "body": [
+                "M102"
+            ]
+        },
+        "Set Hotend Temperature": {
+            "prefix": "M104",
+            "body": [
+                "M104"
+            ]
+        },
+        "Report Temperatures": {
+            "prefix": "M105",
+            "body": [
+                "M105"
+            ]
+        },
+        "Set Fan Speed": {
+            "prefix": "M106",
+            "body": [
+                "M106"
+            ]
+        },
+        "Fan Off": {
+            "prefix": "M107",
+            "body": [
+                "M107"
+            ]
+        },
+        "Break and Continue": {
+            "prefix": "M108",
+            "body": [
+                "M108"
+            ]
+        },
+        "Wait for Hotend Temperature": {
+            "prefix": "M109",
+            "body": [
+                "M109"
+            ]
+        },
+        "Set Line Number": {
+            "prefix": "M110",
+            "body": [
+                "M110"
+            ]
+        },
+        "Debug Level": {
+            "prefix": "M111",
+            "body": [
+                "M111"
+            ]
+        },
+        "Emergency Stop": {
+            "prefix": "M112",
+            "body": [
+                "M112"
+            ]
+        },
+        "Host Keepalive": {
+            "prefix": "M113",
+            "body": [
+                "M113"
+            ]
+        },
+        "Get Current Position": {
+            "prefix": "M114",
+            "body": [
+                "M114"
+            ]
+        },
+        "Firmware Info": {
+            "prefix": "M115",
+            "body": [
+                "M115"
+            ]
+        },
+        "Set LCD Message": {
+            "prefix": "M117",
+            "body": [
+                "M117"
+            ]
+        },
+        "Serial print": {
+            "prefix": "M118",
+            "body": [
+                "M118"
+            ]
+        },
+        "Endstop States": {
+            "prefix": "M119",
+            "body": [
+                "M119"
+            ]
+        },
+        "Enable Endstops": {
+            "prefix": "M120",
+            "body": [
+                "M120"
+            ]
+        },
+        "Disable Endstops": {
+            "prefix": "M121",
+            "body": [
+                "M121"
+            ]
+        },
+        "TMC Debugging": {
+            "prefix": "M122",
+            "body": [
+                "M122"
+            ]
+        },
+        "Fan Tachometers": {
+            "prefix": "M123",
+            "body": [
+                "M123"
+            ]
+        },
+        "Park Head": {
+            "prefix": "M125",
+            "body": [
+                "M125"
+            ]
+        },
+        "Baricuda 1 Open": {
+            "prefix": "M126",
+            "body": [
+                "M126"
+            ]
+        },
+        "Baricuda 1 Close": {
+            "prefix": "M127",
+            "body": [
+                "M127"
+            ]
+        },
+        "Baricuda 2 Open": {
+            "prefix": "M128",
+            "body": [
+                "M128"
+            ]
+        },
+        "Baricuda 2 Close": {
+            "prefix": "M129",
+            "body": [
+                "M129"
+            ]
+        },
+        "Set Bed Temperature": {
+            "prefix": "M140",
+            "body": [
+                "M140"
+            ]
+        },
+        "Set Chamber Temperature": {
+            "prefix": "M141",
+            "body": [
+                "M141"
+            ]
+        },
+        "Set Laser Cooler Temperature": {
+            "prefix": "M143",
+            "body": [
+                "M143"
+            ]
+        },
+        "Set Material Preset": {
+            "prefix": "M145",
+            "body": [
+                "M145"
+            ]
+        },
+        "Set Temperature Units": {
+            "prefix": "M149",
+            "body": [
+                "M149"
+            ]
+        },
+        "Set RGB(W) Color": {
+            "prefix": "M150",
+            "body": [
+                "M150"
+            ]
+        },
+        "Position Auto-Report": {
+            "prefix": "M154",
+            "body": [
+                "M154"
+            ]
+        },
+        "Temperature Auto-Report": {
+            "prefix": "M155",
+            "body": [
+                "M155"
+            ]
+        },
+        "Set Mix Factor": {
+            "prefix": "M163",
+            "body": [
+                "M163"
+            ]
+        },
+        "Save Mix": {
+            "prefix": "M164",
+            "body": [
+                "M164"
+            ]
+        },
+        "Set Mix": {
+            "prefix": "M165",
+            "body": [
+                "M165"
+            ]
+        },
+        "Gradient Mix": {
+            "prefix": "M166",
+            "body": [
+                "M166"
+            ]
+        },
+        "Wait for Bed Temperature": {
+            "prefix": "M190",
+            "body": [
+                "M190"
+            ]
+        },
+        "Wait for Chamber Temperature": {
+            "prefix": "M191",
+            "body": [
+                "M191"
+            ]
+        },
+        "Wait for Probe temperature": {
+            "prefix": "M192",
+            "body": [
+                "M192"
+            ]
+        },
+        "Set Laser Cooler Temperature": {
+            "prefix": "M193",
+            "body": [
+                "M193"
+            ]
+        },
+        "Set Filament Diameter": {
+            "prefix": "M200",
+            "body": [
+                "M200"
+            ]
+        },
+        "Print Move Limits": {
+            "prefix": "M201",
+            "body": [
+                "M201"
+            ]
+        },
+        "Set Max Feedrate": {
+            "prefix": "M203",
+            "body": [
+                "M203"
+            ]
+        }, "Set Starting Acceleration": {
+            "prefix": "M204",
+            "body":[
+                "M204"
+            ]
+        },
+        "Set Advanced Settings": {
+            "prefix": "M205",
+            "body": [
+                "M205"
+            ]
+        },
+        "Set Home Offsets": {
+            "prefix": "M206",
+            "body": [
+                "M206"
+            ]
+        },
+        "Set Firmware Retraction": {
+            "prefix": "M207",
+            "body": [
+                "M207"
+            ]
+        },
+        "Firmware Recover": {
+            "prefix": "M208",
+            "body": [
+                "M208"
+            ]
+        },
+        "Set Auto Retract": {
+            "prefix": "M209",
+            "body": [
+                "M209"
+            ]
+        },
+        "Software Endstops": {
+            "prefix": "M211",
+            "body": [
+                "M211"
+            ]
+        },
+        "Filament swap parameters": {
+            "prefix": "M217",
+            "body": [
+                "M217"
+            ]
+        },
+        "Set Hotend Offset": {
+            "prefix": "M218",
+            "body": [
+                "M218"
+            ]
+        },
+        "Set Feedrate Percentage": {
+            "prefix": "M220",
+            "body": [
+                "M220"
+            ]
+        },
+        "Set Flow Percentage": {
+            "prefix": "M221",
+            "body": [
+                "M221"
+            ]
+        },
+        "Wait for Pin State": {
+            "prefix": "M226",
+            "body": [
+                "M226"
+            ]
+        },
+        "Trigger Camera": {
+            "prefix": "M240",
+            "body": [
+                "M240"
+            ]
+        },
+        "LCD Contrast": {
+            "prefix": "M250",
+            "body": [
+                "M250"
+            ]
+        },
+        "LCD Sleep/Backlight Timeout": {
+            "prefix": "M255",
+            "body": [
+                "M255"
+            ]
+        },
+        "LCD Brightness": {
+            "prefix": "M256",
+            "body": [
+                "M256"
+            ]
+        },
+        "I2C Send": {
+            "prefix": "M260",
+            "body": [
+                "M260"
+            ]
+        },
+        "I2C Request": {
+            "prefix": "M261",
+            "body": [
+                "M261"
+            ]
+        },
+        "Servo Position": {
+            "prefix": "M280",
+            "body": [
+                "M280"
+            ]
+        },
+        "Edit Servo Angles": {
+            "prefix": "M281",
+            "body": [
+                "M281"
+            ]
+        },
+        "Detach Servo": {
+            "prefix": "M282",
+            "body": [
+                "M282"
+            ]
+        },
+        "Babystep": {
+            "prefix": "M290",
+            "body": [
+                "M290"
+            ]
+        },
+        "Play Tone": {
+            "prefix": "M300",
+            "body": [
+                "M300"
+            ]
+        },
+        "Set Hotend PID": {
+            "prefix": "M301",
+            "body": [
+                "M301"
+            ]
+        },
+        "Cold Extrude": {
+            "prefix": "M302",
+            "body": [
+                "M302"
+            ]
+        },
+        "PID autotune": {
+            "prefix": "M303",
+            "body": [
+                "M303"
+            ]
+        },
+        "Set Bed PID": {
+            "prefix": "M304",
+            "body": [
+                "M304"
+            ]
+        }, "User Thermistor Parameters": {
+            "prefix": "M305",
+            "body": [
+                "M305"
+            ]
+        },
+        "Model predictive temperature control": {
+            "prefix": "M306",
+            "body": [
+                "M306"
+            ]
+        },
+        "Set micro-stepping": {
+            "prefix": "M350",
+            "body": [
+                "M350"
+            ]
+        },
+        "Set Microstep Pins": {
+            "prefix": "M351",
+            "body": [
+                "M351"
+            ]
+        },
+        "Case Light Control": {
+            "prefix": "M355",
+            "body": [
+                "M355"
+            ]
+        },
+        "SCARA Theta A": {
+            "prefix": "M360",
+            "body": [
+                "M360"
+            ]
+        },
+        "SCARA Theta-B": {
+            "prefix": "M361",
+            "body": [
+                "M361"
+            ]
+        },
+        "SCARA Psi-A": {
+            "prefix": "M362",
+            "body": [
+                "M362"
+            ]
+        },
+        "SCARA Psi-B": {
+            "prefix": "M363",
+            "body": [
+                "M363"
+            ]
+        },
+        "SCARA Psi-C": {
+            "prefix": "M364",
+            "body": [
+                "M364"
+            ]
+        },
+        "Activate Solenoid": {
+            "prefix": "M380",
+            "body": [
+                "M380"
+            ]
+        },
+        "Deactivate Solenoids": {
+            "prefix": "M381",
+            "body": [
+                "M381"
+            ]
+        },
+        "Finish Moves": {
+            "prefix": "M400",
+            "body": [
+                "M400"
+            ]
+        },
+        "Deploy Probe": {
+            "prefix": "M401",
+            "body": [
+                "M401"
+            ]
+        },
+        "Stow Probe": {
+            "prefix": "M402",
+            "body": [
+                "M402"
+            ]
+        },
+        "MMU2 Filament Type": {
+            "prefix": "M403",
+            "body": [
+                "M403"
+            ]
+        },
+        "Set Filament Diameter": {
+            "prefix": "M404",
+            "body": [
+                "M404"
+            ]
+        },
+        "Filament Width Sensor On": {
+            "prefix": "M405",
+            "body": [
+                "M405"
+            ]
+        },
+        "Filament Width Sensor Off": {
+            "prefix": "M406",
+            "body": [
+                "M406"
+            ]
+        },
+        "Filament Width": {
+            "prefix": "M407",
+            "body": [
+                "M407"
+            ]
+        },
+        "Quickstop": {
+            "prefix": "M410",
+            "body": [
+                "M410"
+            ]
+        },
+        "Filament Runout": {
+            "prefix": "M412",
+            "body": [
+                "M412"
+            ]
+        },
+        "Power-loss Recovery": {
+            "prefix": "M413",
+            "body": [
+                "M413"
+            ]
+        },
+        "Bed Leveling State": {
+            "prefix": "M420",
+            "body": [
+                "M420"
+            ]
+        },
+        "Set Mesh Value": {
+            "prefix": "M421",
+            "body": [
+                "M421"
+            ]
+        },"Set Z Motor  XY": {
+            "prefix": "M422",
+            "body": [
+                "M422"
+            ]
+        },
+        "X Twist Compensation": {
+            "prefix": "M423",
+            "body": [
+                "M423"
+            ]
+        },
+        "Backlash compensation": {
+            "prefix": "M425",
+            "body": [
+                "M425"
+            ]
+        },
+        "Home Offsets Here": {
+            "prefix": "M428",
+            "body": [
+                "M428"
+            ]
+        },
+        "Power Monitor": {
+            "prefix": "M430",
+            "body": [
+                "M430"
+            ]
+        },
+        "Cancel Objects": {
+            "prefix": "M486",
+            "body": [
+                "M486"
+            ]
+        },
+        "Save Settings": {
+            "prefix": "M500",
+            "body": [
+                "M500"
+            ]
+        },
+        "Restore Settings": {
+            "prefix": "M501",
+            "body": [
+                "M501"
+            ]
+        },
+        "Factory Reset": {
+            "prefix": "M502",
+            "body": [
+                "M502"
+            ]
+        },
+        "Report Settings": {
+            "prefix": "M503",
+            "body": [
+                "M503"
+            ]
+        },
+        "Validate EEPROM contents": {
+            "prefix": "M504",
+            "body": [
+                "M504"
+            ]
+        },
+        "Lock Machine": {
+            "prefix": "M510",
+            "body": [
+                "M510"
+            ]
+        },
+        "Unlock Machine": {
+            "prefix": "M511",
+            "body": [
+                "M511"
+            ]
+        },
+        "Set Passcode": {
+            "prefix": "M512",
+            "body": [
+                "M512"
+            ]
+        },
+        "Abort SD print": {
+            "prefix": "M524",
+            "body": [
+                "M524"
+            ]
+        },
+        "Endstops Abort SD": {
+            "prefix": "M540",
+            "body": [
+                "M540"
+            ]
+        },
+        "Set TMC stepping mode": {
+            "prefix": "M569",
+            "body": [
+                "M569"
+            ]
+        },
+        "Serial baud rate": {
+            "prefix": "M575",
+            "body": [
+                "M575"
+            ]
+        },
+        "Input Shaping": {
+            "prefix": "M593",
+            "body": [
+                "M593"
+            ]
+        },
+        "Filament Change": {
+            "prefix": "M600",
+            "body": [
+                "M600"
+            ]
+        },
+        "Configure Filament Change": {
+            "prefix": "M603",
+            "body": [
+                "M603"
+            ]
+        },
+        "Multi Nozzle Mode": {
+            "prefix": "M605",
+            "body": [
+                "M605"
+            ]
+        },
+        "Delta Configuration": {
+            "prefix": "M665",
+            "body": [
+                "M665"
+            ]
+        },
+        "SCARA Configuration": {
+            "prefix": "M665",
+            "body": [
+                "M665"
+            ]
+        },
+        "Set Delta endstop adjustments": {
+            "prefix": "M666",
+            "body": [
+                "M666"
+            ]
+        },
+        "Set dual endstop offsets": {
+            "prefix": "M666",
+            "body": [
+                "M666"
+            ]
+        },"Duet Smart Effector sensitivity": {
+            "prefix": "M672",
+            "body": [
+                "M672"
+            ]
+        }, "Load filament": {
+            "prefix": "M701",
+            "body": [
+                "M701"
+            ]
+        },
+        "Unload filament": {
+            "prefix": "M702",
+            "body": [
+                "M702"
+            ]
+        },
+        "Controller Fan settings": {
+            "prefix": "M710",
+            "body": [
+                "M710"
+            ]
+        },
+        "Repeat Marker": {
+            "prefix": "M808",
+            "body": [
+                "M808"
+            ]
+        },
+        "G-code macros": {
+            "prefix": "M810-M819",
+            "body": [
+                "M810", "M811", "M812", "M813", "M814", "M815", "M816", "M817", "M818", "M819"
+            ]
+        },
+        "XYZ Probe Offset": {
+            "prefix": "M851",
+            "body": [
+                "M851"
+            ]
+        },
+        "Bed Skew Compensation": {
+            "prefix": "M852",
+            "body": [
+                "M852"
+            ]
+        },
+        "I2C Position Encoders": {
+            "prefix": "M860-M869",
+            "body": [
+                "M860", "M861", "M862", "M863", "M864", "M865", "M866", "M867", "M868", "M869"
+            ]
+        },
+        "Probe temperature config": {
+            "prefix": "M871",
+            "body": [
+                "M871"
+            ]
+        },
+        "Handle Prompt Response": {
+            "prefix": "M876",
+            "body": [
+                "M876"
+            ]
+        },
+        "Linear Advance Factor": {
+            "prefix": "M900",
+            "body": [
+                "M900"
+            ]
+        },
+        "Stepper Motor Current": {
+            "prefix": "M906",
+            "body": [
+                "M906"
+            ]
+        },
+        "Set Motor Current": {
+            "prefix": "M907",
+            "body": [
+                "M907"
+            ]
+        },
+        "Set Trimpot Pins": {
+            "prefix": "M908",
+            "body": [
+                "M908"
+            ]
+        },
+        "DAC Print Values": {
+            "prefix": "M909",
+            "body": [
+                "M909"
+            ]
+        },
+        "Commit DAC to EEPROM": {
+            "prefix": "M910",
+            "body": [
+                "M910"
+            ]
+        },
+        "TMC OT Pre-Warn Condition": {
+            "prefix": "M911",
+            "body": [
+                "M911"
+            ]
+        },
+        "Clear TMC OT Pre-Warn": {
+            "prefix": "M912",
+            "body": [
+                "M912"
+            ]
+        },
+        "Set Hybrid Threshold Speed": {
+            "prefix": "M913",
+            "body": [
+                "M913"
+            ]
+        },
+        "TMC Bump Sensitivity": {
+            "prefix": "M914",
+            "body": [
+                "M914"
+            ]
+        },
+        "TMC Z axis calibration": {
+            "prefix": "M915",
+            "body": [
+                "M915"
+            ]
+        },
+        "L6474 Thermal Warning Test": {
+            "prefix": "M916",
+            "body": [
+                "M916"
+            ]
+        },
+        "L6474 Overcurrent Warning Test": {
+            "prefix": "M917",
+            "body": [
+                "M917"
+            ]
+        },
+        "L6474 Speed Warning Test": {
+            "prefix": "M918",
+            "body": [
+                "M918"
+            ]
+        },
+        "TMC Chopper Timing": {
+            "prefix": "M919",
+            "body": [
+                "M919"
+            ]
+        },
+        "Start SD Logging": {
+            "prefix": "M928",
+            "body": [
+                "M928"
+            ]
+        },
+        "Magnetic Parking Extruder": {
+            "prefix": "M951",
+            "body": [
+                "M951"
+            ]
+        },
+        "SD / SPI Flash": {
+            "prefix": "M993-M994",
+            "body": [
+                "M993", "M994"
+            ]
+        },
+        "Touch Screen Calibration": {
+            "prefix": "M995",
+            "body": [
+                "M995"
+            ]
+        },
+        "Firmware update": {
+            "prefix": "M997",
+            "body": [
+                "M997"
+            ]
+        },
+        "STOP Restart": {
+            "prefix": "M999",
+            "body": [
+                "M999"
+            ]
+        },
+        "MAX7219 Control": {
+            "prefix": "M7219",
+            "body": [
+                "M7219"
+            ]
+        },
+        "Select Tool": {
+            "prefix": "T0-T6",
+            "body": [
+                "T0", "T1", "T2", "T3", "T4", "T5", "T6"
+            ]
+        }
+
+    
+    
+}
