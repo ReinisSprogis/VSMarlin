@@ -3,7 +3,7 @@
 // const path = require('path');
 // const MarkdownIt = require('markdown-it');
 // const md = new MarkdownIt();
-//MAYBE CAN INJECT DESCRIPTION
+//MAYBE CAN use to INJECT DESCRIPTION
 
 // const registerSnippets = (context) => {
 //   const { subscriptions } = context;
