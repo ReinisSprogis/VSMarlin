@@ -18,7 +18,7 @@ async function graphics(context) {
     if (lastGcodeContents[uri] === undefined || currentGcodeContent !== lastGcodeContents[uri]) {
       lastGcodeContents[uri] = currentGcodeContent;
       panels.forEach((panel) => {
-        if (panel && panel.webview) {
+        if (panel && panel.webview && panel.uri === uri) {
           panel.webview.postMessage({ type: 'updateToolpath', uri, gcodeContent: currentGcodeContent });
         }
       });
@@ -28,16 +28,20 @@ async function graphics(context) {
   
 
   let disposable = vscode.commands.registerCommand('marlin.showToolpath', async () => {
+    const editor = vscode.window.activeTextEditor;
+    const document = editor.document;
+    const uri = document.uri.toString();
+    const fileName = path.basename(document.fileName);
     const panel = vscode.window.createWebviewPanel(
       'toolpathView',
-      'Toolpath',
+      'Toolpath: ' + fileName,
       vscode.ViewColumn.Beside,
       {
         enableScripts: true,
       }
     );
 
-    panel.uri = getActiveEditorUri();
+    panel.uri = uri;
     panels.push(panel);
 
     panel.webview.onDidReceiveMessage(
@@ -74,10 +78,21 @@ async function graphics(context) {
   });
 }
 
-function getActiveEditorUri() {
-  const editor = vscode.window.activeTextEditor;
-  return editor.document.uri.toString();
-}
+vscode.window.onDidChangeActiveTextEditor((editor) => {
+  if (editor) {
+    const uri = editor.document.uri.toString();
+    console.log(uri);
+    panels.forEach((panel) => {
+      if (panel && panel.webview) {
+        panel.uri = uri;
+        panel.webview.postMessage({ type: 'setUri', uri: panel.uri });
+        updateToolpath();
+      }
+    });
+  }
+});
+
+
 
 function getToolpathHtml() {
   const toolpathHtml = fs.readFileSync(path.join(__dirname, 'toolpath.html'), 'utf-8');
