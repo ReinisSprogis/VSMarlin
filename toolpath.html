@@ -62,9 +62,7 @@
             z-index: 999;
         }
     </style>
-
 </head>
-
 
 <body>
     <!-- Import maps polyfill -->
@@ -149,17 +147,12 @@
             }
         });
 
-
         function handleFileUpload(file) {
             console.log(`File dropped: ${file.name}`);
             // Pass the file to the handleFileUpload function in the module script
             handleFileUploadInModule(file);
         }
     </script>
-
-
-
-
     <script type="importmap">
   {
     "imports": {
@@ -181,9 +174,11 @@
         import { STLLoader } from 'three/addons/loaders/STLLoader.js';
         import { TransformControls } from 'three/addons/controls/TransformControls.js';
         import { VertexNormalsHelper } from 'three/addons/helpers/VertexNormalsHelper.js';
+        import { SelectionBox } from 'three/addons/interactive/SelectionBox.js';
+			import { SelectionHelper } from 'three/addons/interactive/SelectionHelper.js';
 
         let line, thresholdLine, segments, thresholdSegments;
-        let renderer, scene, camera, controls, transformControls;
+        let renderer, scene, camera, controls, transformControls, selectionBox, selectionHelper;
         let stats, gpuPanel;
         let gui;
         let points, models, mesh;
@@ -194,7 +189,7 @@
         const rangeLabel = document.getElementById("rangeLabel");
 
         let toolpathData = [];
-
+        let isDragging = false;
 
         init();
         animate();
@@ -223,9 +218,6 @@
             });
         };
 
-
-
-
         function init() {
 
             const frustumSize = 400;
@@ -250,9 +242,6 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
-
-
-
             //***Camera***//
             const perspectiveCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             const orthographicCamera = new THREE.OrthographicCamera(frustumSize * aspect / - 2, frustumSize * aspect / 2, frustumSize / 2, frustumSize / - 2, 1, 1000);
@@ -261,9 +250,8 @@
             camera.position.z = 75;
             camera.position.y = (-105 * 2);
             camera.position.x = 105;
-
-
-
+            selectionBox = new SelectionBox(camera, scene);
+            selectionHelper = new SelectionHelper(renderer, 'selectBox');
 
             //****Helpers****//
             const size = 210;
@@ -277,9 +265,6 @@
             // scene.add(cameraHelper);
             const axesHelper = new THREE.AxesHelper(50);
             scene.add(axesHelper);
-
-
-
 
             //***Controls***//
             controls = new OrbitControls(camera, renderer.domElement);
@@ -328,6 +313,43 @@
                 points.visible = event.target.checked;
             });
 
+            document.addEventListener('pointerdown', function (event) {
+                selectionBox.startPoint.set(
+                    (event.clientX / window.innerWidth) * 2 - 1,
+                    -(event.clientY / window.innerHeight) * 2 + 1,
+                    0.5
+                );
+            });
+
+            document.addEventListener('pointermove', function (event) {
+                if (selectionHelper.isDown) {
+                    selectionBox.endPoint.set(
+                        (event.clientX / window.innerWidth) * 2 - 1,
+                        -(event.clientY / window.innerHeight) * 2 + 1,
+                        0.5
+                    );
+
+                    const allSelected = selectionBox.select();
+
+                    for (let i = 0; i < allSelected.length; i++) {
+                        allSelected[i].material.color.set(0xffffff);
+                    }
+                }
+            });
+
+            document.addEventListener('pointerup', function (event) {
+                selectionBox.endPoint.set(
+                    (event.clientX / window.innerWidth) * 2 - 1,
+                    -(event.clientY / window.innerHeight) * 2 + 1,
+                    0.5
+                );
+
+                const allSelected = selectionBox.select();
+
+                for (let i = 0; i < allSelected.length; i++) {
+                    allSelected[i].material.color.set(0xffffff);
+                }
+            });
 
 
             //***Geometry data***//
@@ -381,8 +403,6 @@
             }
         }
 
-
-
         function applyGcodeDiff(gcodeDiff) {
             let updatedGcodeContent = '';
             gcodeDiff.forEach(([operation, text]) => {
@@ -424,6 +444,7 @@
 
             return coordinates;
         }
+
 
 
         function updateGeometry() {
@@ -490,19 +511,15 @@
             return new THREE.BufferGeometry().setFromPoints(arcPoints);
         }
 
-
         window.addEventListener('resize', onWindowResize);
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             rangeSiderEnd.ariaValueNow = 10;
             renderer.setSize(window.innerWidth, window.innerHeight);
-
             render();
         }
-
     </script>
-
 </body>
 
 </html>
