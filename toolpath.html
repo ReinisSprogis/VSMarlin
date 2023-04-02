@@ -193,7 +193,7 @@
         const rangeSiderStart = document.getElementById("rangeSliderStart");
         const rangeLabel = document.getElementById("rangeLabel");
 
-        let toolpathData = [] ;
+        let toolpathData = [];
 
 
         init();
@@ -227,7 +227,7 @@
 
 
         function init() {
-
+            
             const frustumSize = 400;
             camera = null;
             const aspect = window.innerWidth / window.innerHeight;
@@ -354,18 +354,79 @@
         }
 
         window.addEventListener('message', (event) => {
-    const message = event.data;
-    if (message.type === 'updateToolpath') {
-       toolpathData = message.toolpathData;
-       const lineGeometry = new THREE.BufferGeometry().setFromPoints(toolpathData);
-    const pointsGeometry = new THREE.BufferGeometry().setFromPoints(toolpathData);
+           loadData(event);
+        });
 
-            line.geometry.dispose();
-            line.geometry = lineGeometry;
-            points.geometry.dispose();
-            points.geometry = pointsGeometry;
-    }
-  });
+        //load data
+        function loadData(event){
+            const message = event.data;
+            if (message.type === 'updateToolpath') {
+                const gcodeDiff = message.gcodeDiff;
+                const updatedGcodeContent = applyGcodeDiff(gcodeDiff);
+                toolpathData = parseGcode(updatedGcodeContent);
+
+                const lineGeometry = new THREE.BufferGeometry().setFromPoints(toolpathData);
+                const pointsGeometry = new THREE.BufferGeometry().setFromPoints(toolpathData);
+
+                line.geometry.dispose();
+                line.geometry = lineGeometry;
+                points.geometry.dispose();
+                points.geometry = pointsGeometry;
+            } else if(message == null && toolpathData != null){
+                const lineGeometry = new THREE.BufferGeometry().setFromPoints(toolpathData);
+                const pointsGeometry = new THREE.BufferGeometry().setFromPoints(toolpathData);
+
+                line.geometry.dispose();
+                line.geometry = lineGeometry;
+                points.geometry.dispose();
+                points.geometry = pointsGeometry;
+            }
+        }
+
+       
+
+        function applyGcodeDiff(gcodeDiff) {
+            let updatedGcodeContent = '';
+            gcodeDiff.forEach(([operation, text]) => {
+                switch (operation) {
+                    case 0: // Equal
+                        updatedGcodeContent += text;
+                        break;
+                    case 1: // Insert
+                        updatedGcodeContent += text;
+                        break;
+                    case -1: // Delete
+                        break;
+                }
+            });
+            return updatedGcodeContent;
+        }
+
+        function parseGcode(gcodeContent) {
+            const lines = gcodeContent.split('\n');
+            const coordinates = [];
+            let current = new THREE.Vector3();
+
+            for (const line of lines) {
+               
+                if (line.startsWith('G1') || line.startsWith('G0')) {
+                    const matchX = line.match(/X(-?\d+(\.\d+)?)/);
+                    const matchY = line.match(/Y(-?\d+(\.\d+)?)/);
+                    const matchZ = line.match(/Z(-?\d+(\.\d+)?)/);
+
+                    const newX = matchX ? parseFloat(matchX[1]) : current.x;
+                    const newY = matchY ? parseFloat(matchY[1]) : current.y;
+                    const newZ = matchZ ? parseFloat(matchZ[1]) : current.z;
+
+                    const next = new THREE.Vector3(newX, newY, newZ);
+                    coordinates.push(current, next);
+                    current = next;
+                }
+            }
+
+            return coordinates;
+        }
+
 
         function updateGeometry() {
             const endValue = parseFloat(rangeSiderEnd.value);

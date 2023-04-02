@@ -2,23 +2,29 @@ const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
 const THREE = require('three');
-
+const diff = require('fast-diff');
 
 async function graphics(context) {
   const panels = [];
+  let lastGcodeContent = '';
 
   const updateToolpath = () => {
     const editor = vscode.window.activeTextEditor;
     const document = editor.document;
-    const gcodeContent = document.getText();
-    const toolpathData = parseGcode(gcodeContent);
-
-    panels.forEach((panel) => {
-      if (panel && panel.webview) {
-        panel.webview.postMessage({ type: 'updateToolpath', toolpathData });
-      }
-    });
+    const currentGcodeContent = document.getText();
+  
+    if (currentGcodeContent !== lastGcodeContent) {
+      const gcodeDiff = diff(lastGcodeContent, currentGcodeContent);
+      lastGcodeContent = currentGcodeContent;
+  
+      panels.forEach((panel) => {
+        if (panel && panel.webview) {
+          panel.webview.postMessage({ type: 'updateToolpath', gcodeDiff });
+        }
+      });
+    }
   };
+  
 
   let disposable = vscode.commands.registerCommand('marlin.showToolpath', async () => {
     const panel = vscode.window.createWebviewPanel(
@@ -69,34 +75,34 @@ async function graphics(context) {
 
 
 function parseGcode(gcodeContent) {
-    const lines = gcodeContent.split('\n');
-    const coordinates = [];
-    let current = new THREE.Vector3();
-  
-    for (const line of lines) {
-      if (line.startsWith('G1') || line.startsWith('G0')) {
-        const matchX = line.match(/X(-?\d+(\.\d+)?)/);
-        const matchY = line.match(/Y(-?\d+(\.\d+)?)/);
-        const matchZ = line.match(/Z(-?\d+(\.\d+)?)/);
-  
-        const newX = matchX ? parseFloat(matchX[1]) : current.x;
-        const newY = matchY ? parseFloat(matchY[1]) : current.y;
-        const newZ = matchZ ? parseFloat(matchZ[1]) : current.z;
-  
-        const next = new THREE.Vector3(newX, newY, newZ);
-        coordinates.push(current, next);
-        current = next;
-      }
+  const lines = gcodeContent.split('\n');
+  const coordinates = [];
+  let current = new THREE.Vector3();
+
+  for (const line of lines) {
+    if (line.startsWith('G1') || line.startsWith('G0')) {
+      const matchX = line.match(/X(-?\d+(\.\d+)?)/);
+      const matchY = line.match(/Y(-?\d+(\.\d+)?)/);
+      const matchZ = line.match(/Z(-?\d+(\.\d+)?)/);
+
+      const newX = matchX ? parseFloat(matchX[1]) : current.x;
+      const newY = matchY ? parseFloat(matchY[1]) : current.y;
+      const newZ = matchZ ? parseFloat(matchZ[1]) : current.z;
+
+      const next = new THREE.Vector3(newX, newY, newZ);
+      coordinates.push(current, next);
+      current = next;
     }
-  
-    return coordinates;
   }
-  
-  function getToolpathHtml() {
-    const toolpathHtml = fs.readFileSync(path.join(__dirname, 'toolpath.html'), 'utf-8');
-    return toolpathHtml;
-  }
-  
-  
+
+  return coordinates;
+}
+
+function getToolpathHtml() {
+  const toolpathHtml = fs.readFileSync(path.join(__dirname, 'toolpath.html'), 'utf-8');
+  return toolpathHtml;
+}
+
+
 
 exports.graphics = graphics;
