@@ -5,13 +5,14 @@
     "Linear Rapid Move":{
         "prefix": "G0",
         "body": [
-            "G0 X${1:0} Y${2:0} Z${3:0}"
+            "G0"
         ]
     },
+
     "Linear Feedrate Move":{
         "prefix": "G1",
         "body": [
-            "G1 X${1:0} Y${2:0} Z${3:0} "
+            "G1"
         ]
     },
     "Clockwise Arc Move":{
@@ -27,7 +28,7 @@
         ]
     },
     " Dwell":{
-        "prefix": "G4",
+        "prefix": "G4_DWELL",
         "body": [
             "G4 P${1:0}"
         ]
@@ -87,7 +88,7 @@
         ]
     },
     "Set Units to Millimeters":{
-        "prefix": "G21",
+        "prefix": "G12",
         "body": [
             "G21"
         ]
@@ -152,26 +153,26 @@
             "G35"
         ]
     },
-    "Probe target 2":{
+    "Probe target G38.2":{
         "prefix": "G38.2",
         "description": "G38.2 - ",
         "body": [
             "G38.2 X${1:0} Y${2:0} Z${3:0} F${4:0}"
         ]
     },
-    "Probe target 3":{
+    "Probe target G38.3":{
         "prefix": "G38.3",
         "body": [
             "G38.3 X${1:0} Y${2:0} Z${3:0} F${4:0}"
         ]
     },
-    "Probe target 4":{
+    "Probe target G38.4":{
         "prefix": "G38.4",
         "body": [
             "G38.4 X${1:0} Y${2:0} Z${3:0} F${4:0}"
         ]
     },
-    "Probe target 5":{
+    "Probe target G38.5":{
         "prefix": "G38.5",
         "body": [
             "G38.5 X${1:0} Y${2:0} Z${3:0} F${4:0}"
@@ -189,57 +190,57 @@
             "G53"
         ]
     },
-    "Workspace coordinate system 1": {
+    "Workspace coordinate system G54": {
         "prefix": "G54",
         "body": [
             "G54"
         ]
     },
-    "Workspace coordinate system 2": {
+    "Workspace coordinate system G55": {
         "prefix": "G55",
         "body": [
             "G55"
         ]
     },
-    "Workspace coordinate system 3": {
+    "Workspace coordinate system G56": {
         "prefix": "G56",
         "body": [
             "G56"
         ]
     },
-    "Workspace coordinate system 4": {
+    "Workspace coordinate system G57": {
         "prefix": "G57",
         "body": [
             "G57"
         ]
     },
-    "Workspace coordinate system 5": {
+    "Workspace coordinate system G58": {
         "prefix": "G58",
         "body": [
             "G58"
         ]
     },
-    "Workspace coordinate system 6": {
+    "Workspace coordinate system G59": {
         "prefix": "G59",
         "body": [
             "G59"
         ]
     },
-    "Workspace coordinate system 7": {
+    "Workspace coordinate system G59.1": {
         "prefix": "G59.1",
     
         "body": [
             "G59.1"
         ]
     },
-    "Workspace coordinate system 8": {
+    "Workspace coordinate system G59.2": {
         "prefix": "G59.2",
     
         "body": [
             "G59.2"
         ]
     },
-    "Workspace coordinate system 9": {
+    "Workspace coordinate system G59.3": {
         "prefix": "G59.3",
     
         "body": [
@@ -248,7 +249,6 @@
     },
     "Save current position": {
         "prefix": "G60",
-        "description": "G60 - ",
         "body": [
             "G60"
         ]
@@ -799,7 +799,7 @@
                 "M192"
             ]
         },
-        "Set Laser Cooler Temperature": {
+        "Set Laser Cooler Temperature M193": {
             "prefix": "M193",
             "body": [
                 "M193"
@@ -1073,13 +1073,13 @@
                 "M402"
             ]
         },
-        "MMU2 Filament Type": {
+        "MMU2 Filament Type M403": {
             "prefix": "M403",
             "body": [
                 "M403"
             ]
         },
-        "Set Filament Diameter": {
+        "Set Filament Diameter M404": {
             "prefix": "M404",
             "body": [
                 "M404"
@@ -1316,10 +1316,65 @@
                 "M808"
             ]
         },
-        "G-code macros": {
-            "prefix": "M810-M819",
+
+        "G-code macros M810": {
+            "prefix": "M810",
             "body": [
-                "M810", "M811", "M812", "M813", "M814", "M815", "M816", "M817", "M818", "M819"
+                "M810"
+            ]
+        },
+        "G-code macros M811": {
+            "prefix": "M811",
+            "body": [
+                "M811"
+            ]
+        },
+        "G-code macros M812": {
+            "prefix": "M812",
+            "body": [
+                "M812"
+            ]
+        },
+        "G-code macros M813": {
+            "prefix": "M813",
+            "body": [
+                "M813"
+            ]
+        },
+        "G-code macros M814": {
+            "prefix": "M814",
+            "body": [
+                "M814"
+            ]
+        },
+        "G-code macros M815": {
+            "prefix": "M815",
+            "body": [
+                "M815"
+            ]
+        },
+        "G-code macros M816": {
+            "prefix": "M816",
+            "body": [
+                "M816"
+            ]
+        },
+        "G-code macros M817": {
+            "prefix": "M817",
+            "body": [
+                "M817"
+            ]
+        },
+        "G-code macros M818": {
+            "prefix": "M818",
+            "body": [
+                "M818"
+            ]
+        },
+        "G-code macros M819": {
+            "prefix": "M819",
+            "body": [
+                "M819"
             ]
         },
         "XYZ Probe Offset": {
@@ -1334,10 +1389,65 @@
                 "M852"
             ]
         },
-        "I2C Position Encoders": {
-            "prefix": "M860-M869",
+
+        "I2C Position Encoders M860": {
+            "prefix": "M860",
             "body": [
-                "M860", "M861", "M862", "M863", "M864", "M865", "M866", "M867", "M868", "M869"
+                "M860"
+            ]
+        },
+        "I2C Position Encoders M861": {
+            "prefix": "M861",
+            "body": [
+                "M861"
+            ]
+        },
+        "I2C Position Encoders M862": {
+            "prefix": "M862",
+            "body": [
+                "M862"
+            ]
+        },
+        "I2C Position Encoders M863": {
+            "prefix": "M863",
+            "body": [
+                "M863"
+            ]
+        },
+        "I2C Position Encoders M864": {
+            "prefix": "M864",
+            "body": [
+                "M864"
+            ]
+        },
+        "I2C Position Encoders M865": {
+            "prefix": "M865",
+            "body": [
+                "M865"
+            ]
+        },
+        "I2C Position Encoders M866": {
+            "prefix": "M866",
+            "body": [
+                "M866"
+            ]
+        },
+        "I2C Position Encoders M867": {
+            "prefix": "M867",
+            "body": [
+                "M867"
+            ]
+        },
+        "I2C Position Encoders M868": {
+            "prefix": "M868",
+            "body": [
+                "M868"
+            ]
+        },
+        "I2C Position Encoders M869": {
+            "prefix": "M869",
+            "body": [
+                "M869"
             ]
         },
         "Probe temperature config": {
@@ -1485,9 +1595,9 @@
             ]
         },
         "Select Tool": {
-            "prefix": "T0-T6",
+            "prefix": "T",
             "body": [
-                "T0", "T1", "T2", "T3", "T4", "T5", "T6"
+                "T${1:0}"
             ]
         }
 
