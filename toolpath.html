@@ -227,7 +227,7 @@
 
 
         function init() {
-            
+
             const frustumSize = 400;
             camera = null;
             const aspect = window.innerWidth / window.innerHeight;
@@ -353,26 +353,24 @@
             updateGeometry();
         }
 
+        let documentUri = '';
         window.addEventListener('message', (event) => {
-           loadData(event);
+
+            loadData(event);
         });
 
         //load data
-        function loadData(event){
+        function loadData(event) {
             const message = event.data;
             if (message.type === 'updateToolpath') {
-                const gcodeDiff = message.gcodeDiff;
-                const updatedGcodeContent = applyGcodeDiff(gcodeDiff);
-                toolpathData = parseGcode(updatedGcodeContent);
+                const uri = message.uri;
+                const gcodeContent = message.gcodeContent;
 
-                const lineGeometry = new THREE.BufferGeometry().setFromPoints(toolpathData);
-                const pointsGeometry = new THREE.BufferGeometry().setFromPoints(toolpathData);
+                // Update documentUri to the new URI
+                documentUri = uri;
 
-                line.geometry.dispose();
-                line.geometry = lineGeometry;
-                points.geometry.dispose();
-                points.geometry = pointsGeometry;
-            } else if(message == null && toolpathData != null){
+                // Parse the G-code content and update the toolpath
+                toolpathData = parseGcode(gcodeContent);
                 const lineGeometry = new THREE.BufferGeometry().setFromPoints(toolpathData);
                 const pointsGeometry = new THREE.BufferGeometry().setFromPoints(toolpathData);
 
@@ -383,7 +381,7 @@
             }
         }
 
-       
+
 
         function applyGcodeDiff(gcodeDiff) {
             let updatedGcodeContent = '';
@@ -408,7 +406,7 @@
             let current = new THREE.Vector3();
 
             for (const line of lines) {
-               
+
                 if (line.startsWith('G1') || line.startsWith('G0')) {
                     const matchX = line.match(/X(-?\d+(\.\d+)?)/);
                     const matchY = line.match(/Y(-?\d+(\.\d+)?)/);
