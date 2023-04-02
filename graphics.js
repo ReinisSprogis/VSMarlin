@@ -2,34 +2,70 @@ const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
 const THREE = require('three');
-async function graphics(context){
 
-    let disposable = vscode.commands.registerCommand('marlin.showToolpath', async () => {
-        // Create and show a new WebView panel
-        const panel = vscode.window.createWebviewPanel(
-          'toolpathView',
-          'Toolpath',
-          vscode.ViewColumn.Beside,
-          {
-            enableScripts: true
-            
-          }
-        );
-    
-        // Get the current file G-code content
-        const editor = vscode.window.activeTextEditor;
-        const document = editor.document;
-        const gcodeContent = document.getText();
-    
-        // Parse G-code and generate 3D toolpath data
-        const toolpathData = parseGcode(gcodeContent);
-    
-        // Render the 3D toolpath in the WebView
-        panel.webview.html = getToolpathHtml(toolpathData);
-      });
-      
+
+async function graphics(context) {
+  const panels = [];
+
+  const updateToolpath = () => {
+    const editor = vscode.window.activeTextEditor;
+    const document = editor.document;
+    const gcodeContent = document.getText();
+    const toolpathData = parseGcode(gcodeContent);
+
+    panels.forEach((panel) => {
+      if (panel && panel.webview) {
+        panel.webview.postMessage({ type: 'updateToolpath', toolpathData });
+      }
+    });
+  };
+
+  let disposable = vscode.commands.registerCommand('marlin.showToolpath', async () => {
+    const panel = vscode.window.createWebviewPanel(
+      'toolpathView',
+      'Toolpath',
+      vscode.ViewColumn.Beside,
+      {
+        enableScripts: true,
+      }
+    );
+
+    panels.push(panel);
+
+    panel.webview.onDidReceiveMessage(
+      (message) => {
+        if (message.type === 'ready') {
+          updateToolpath();
+        }
+      },
+      undefined,
+      context.subscriptions
+    );
+
+    panel.webview.html = getToolpathHtml();
+
+    panel.onDidDispose(
+      () => {
+        const panelIndex = panels.indexOf(panel);
+        if (panelIndex !== -1) {
+          panels.splice(panelIndex, 1);
+        }
+      },
+      null,
+      context.subscriptions
+    );
+  });
+
   context.subscriptions.push(disposable);
+
+  vscode.workspace.onDidChangeTextDocument((event) => {
+    if (event.document === vscode.window.activeTextEditor.document) {
+      updateToolpath();
+    }
+  });
 }
+
+
 
 
 function parseGcode(gcodeContent) {
@@ -56,15 +92,11 @@ function parseGcode(gcodeContent) {
     return coordinates;
   }
   
-  function getToolpathHtml(toolpathData) {
-    // Read the content of the toolpath.html file
+  function getToolpathHtml() {
     const toolpathHtml = fs.readFileSync(path.join(__dirname, 'toolpath.html'), 'utf-8');
-  
-    // Replace the TOOLPATH_DATA_PLACEHOLDER with the actual toolpathData
-    const filledToolpathHtml = toolpathHtml.replace('TOOLPATH_DATA_PLACEHOLDER', JSON.stringify(toolpathData));
-  
-    return filledToolpathHtml;
+    return toolpathHtml;
   }
+  
   
 
 exports.graphics = graphics;

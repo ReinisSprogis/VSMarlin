@@ -193,7 +193,7 @@
         const rangeSiderStart = document.getElementById("rangeSliderStart");
         const rangeLabel = document.getElementById("rangeLabel");
 
-        const toolpathData = TOOLPATH_DATA_PLACEHOLDER;
+        let toolpathData = [] ;
 
 
         init();
@@ -209,16 +209,16 @@
             stlLoader = new STLLoader();
             stlLoader.load(URL.createObjectURL(file), function (geometry) {
 
-                const material = new  THREE.MeshStandardMaterial({color: 0x0ED5F1, side: THREE.DoubleSide})
+                const material = new THREE.MeshStandardMaterial({ color: 0x0ED5F1, side: THREE.DoubleSide })
                 mesh = new THREE.Mesh(geometry, material);
-               // mesh.material.depthWrite = false;
-    
+                // mesh.material.depthWrite = false;
+
                 mesh.position.set(105, 105, 0);
                 mesh.rotation.set(-180, 0, 0);
                 mesh.scale.set(1, 1, 1);
                 transformControls.attach(mesh);
                 const helper = new VertexNormalsHelper(mesh, 1, 0xff0000);
-               // scene.add(helper);
+                // scene.add(helper);
                 scene.add(mesh);
             });
         };
@@ -294,8 +294,8 @@
             controls.enableRotate = true;
             // Enable zoom using the mouse scroll
             controls.enableZoom = true;
-          //  controls.rotateSpeed *= -1;
-         
+            //  controls.rotateSpeed *= -1;
+
 
             transformControls = new TransformControls(camera, renderer.domElement);
             transformControls.addEventListener('change', render);
@@ -306,7 +306,7 @@
                 OrbitControls.enabled = !event.value
 
             });
-          
+
             scene.add(transformControls);
 
             //***Actions***//
@@ -340,8 +340,32 @@
             points = new THREE.Points(pointsGeometry, pointsMaterial);
             scene.add(points);
 
+            //***Arc***//
+            const startPosition = new THREE.Vector3(9, 6, 0);
+            const endPosition = new THREE.Vector3(2, 7, 0);
+            const I = -4;
+            const J = -3;
+            const isClockwise = false;
+
+            const arcGeometry = createArcGeometry(startPosition, endPosition, I, J, isClockwise);
+            const arc = new THREE.Line(arcGeometry, lineMaterial);
+            scene.add(arc);
             updateGeometry();
         }
+
+        window.addEventListener('message', (event) => {
+    const message = event.data;
+    if (message.type === 'updateToolpath') {
+       toolpathData = message.toolpathData;
+       const lineGeometry = new THREE.BufferGeometry().setFromPoints(toolpathData);
+    const pointsGeometry = new THREE.BufferGeometry().setFromPoints(toolpathData);
+
+            line.geometry.dispose();
+            line.geometry = lineGeometry;
+            points.geometry.dispose();
+            points.geometry = pointsGeometry;
+    }
+  });
 
         function updateGeometry() {
             const endValue = parseFloat(rangeSiderEnd.value);
@@ -354,7 +378,6 @@
                     rangeSiderStart.value = endValue;
                     return;
                 }
-
             rangeLabel.textContent = `${Math.round(endValue * 100)}%`;
             const startIndex = Math.floor(toolpathData.length * startValue);
             const endIndex = Math.floor(toolpathData.length * endValue);
@@ -377,10 +400,37 @@
         }
 
         function render() {
-
             renderer.render(scene, camera);
-
         }
+
+        function createArcGeometry(start, end, I, J, isClockwise, segments = 100) {
+            const center = start.clone().add(new THREE.Vector3(I, J, 0));
+            const radius = center.distanceTo(start);
+            const startAngle = Math.atan2(start.y - center.y, start.x - center.x);
+            const endAngle = Math.atan2(end.y - center.y, end.x - center.x);
+            const arcPoints = [];
+
+            if (!isClockwise) {
+                if (endAngle <= startAngle) {
+                    endAngle += 2 * Math.PI;
+                }
+            } else {
+                if (endAngle >= startAngle) {
+                    endAngle -= 2 * Math.PI;
+                }
+            }
+
+            for (let i = 0; i <= segments; i++) {
+                const t = i / segments;
+                const angle = THREE.MathUtils.lerp(startAngle, endAngle, t);
+                const x = center.x + radius * Math.cos(angle);
+                const y = center.y + radius * Math.sin(angle);
+                arcPoints.push(new THREE.Vector3(x, y, 0));
+            }
+
+            return new THREE.BufferGeometry().setFromPoints(arcPoints);
+        }
+
 
         window.addEventListener('resize', onWindowResize);
         function onWindowResize() {
