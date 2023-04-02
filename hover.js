@@ -114,18 +114,3 @@ function hoverInfoActivate(context) {
 
 exports.hoverInfoActivate = hoverInfoActivate;
 
-//Returns markdown from file located in the Marling documentation gcodes folder.
-function getMarkdownFromFile(path){
-    return new Promise((resolve, reject) => {
-        fs.readFile(filePath, 'utf8', (err, data) => {
-            if (err) {
-                reject(err);
-            } else {
-                const markdownString = md.render(data);
-                const hoverMarkdownString = new vscode.MarkdownString(markdownString, true);
-                hoverMarkdownString.supportHtml = true;
-                resolve(new vscode.Hover(hoverMarkdownString));
-            }
-        });
-    });
-}
