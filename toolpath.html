@@ -175,7 +175,7 @@
         import { TransformControls } from 'three/addons/controls/TransformControls.js';
         import { VertexNormalsHelper } from 'three/addons/helpers/VertexNormalsHelper.js';
         import { SelectionBox } from 'three/addons/interactive/SelectionBox.js';
-			import { SelectionHelper } from 'three/addons/interactive/SelectionHelper.js';
+        import { SelectionHelper } from 'three/addons/interactive/SelectionHelper.js';
 
         let line, thresholdLine, segments, thresholdSegments;
         let renderer, scene, camera, controls, transformControls, selectionBox, selectionHelper;
@@ -377,8 +377,13 @@
 
         let documentUri = '';
         window.addEventListener('message', (event) => {
-
             loadData(event);
+        });
+
+        window.addEventListener('panelOpened', (event) => {
+            console.log('panelOpened');
+            loadData(event);
+
         });
 
         //load data
@@ -421,29 +426,102 @@
         }
 
         function parseGcode(gcodeContent) {
-            const lines = gcodeContent.split('\n');
+            const lines = gcodeContent.split("\n");
             const coordinates = [];
-            let current = new THREE.Vector3();
+            var current = new THREE.Vector3();
+            let lastCommand = "";
 
-            for (const line of lines) {
+            for (var line of lines) {
+                const command = line.split(" ")[0].toUpperCase();
 
-                if (line.startsWith('G1') || line.startsWith('G0')) {
+                if (command === "G1" || command === "G0") {
+                    const matchX = line.match(/X(-?\d+(\.\d+)?)/);
+            const matchY = line.match(/Y(-?\d+(\.\d+)?)/);
+            const matchZ = line.match(/Z(-?\d+(\.\d+)?)/);
+
+            const newX = matchX ? parseFloat(matchX[1]) : current.x;
+            const newY = matchY ? parseFloat(matchY[1]) : current.y;
+            const newZ = matchZ ? parseFloat(matchZ[1]) : current.z;
+
+            const next = new THREE.Vector3(newX, newY, newZ);
+            coordinates.push(current, next);
+            current = next;
+            lastCommand = command;
+                } else if (command === "G2" || command === "G3") {
                     const matchX = line.match(/X(-?\d+(\.\d+)?)/);
                     const matchY = line.match(/Y(-?\d+(\.\d+)?)/);
-                    const matchZ = line.match(/Z(-?\d+(\.\d+)?)/);
+                    const matchI = line.match(/I(-?\d+(\.\d+)?)/);
+                    const matchJ = line.match(/J(-?\d+(\.\d+)?)/);
+                    const matchR = line.match(/R(-?\d+(\.\d+)?)/);
 
                     const newX = matchX ? parseFloat(matchX[1]) : current.x;
                     const newY = matchY ? parseFloat(matchY[1]) : current.y;
-                    const newZ = matchZ ? parseFloat(matchZ[1]) : current.z;
+                    const I = matchI ? parseFloat(matchI[1]) : null;
+                    const J = matchJ ? parseFloat(matchJ[1]) : null;
+                    const R = matchR ? parseFloat(matchR[1]) : null;
 
-                    const next = new THREE.Vector3(newX, newY, newZ);
-                    coordinates.push(current, next);
-                    current = next;
+                    const clockwise = command === "G2";
+
+                    const arcPoints = computeArcPoints(current, newX, newY, I, J, R, clockwise);
+
+                    coordinates.push(...arcPoints);
+                    current = arcPoints[arcPoints.length - 1];
+                    lastCommand = command;
                 }
             }
 
             return coordinates;
         }
+
+
+        function computeArcPoints(start, endX, endY, I, J, R, clockwise) {
+    const end = new THREE.Vector3(endX, endY, start.z);
+    let centerX, centerY, radius;
+
+    if (I !== null && J !== null) {
+        centerX = start.x + I;
+        centerY = start.y + J;
+        radius = Math.sqrt(I * I + J * J);
+    } else if (R !== null) {
+        const d = start.distanceTo(end) / 2;
+        if (R < d) {
+            console.error("Invalid arc: radius is smaller than the distance between start and end points.");
+            return [start, end];
+        }
+        radius = R;
+        const h = Math.sqrt(R * R - d * d);
+        const midPoint = start.clone().lerp(end, 0.5);
+        const theta = Math.atan2(end.y - start.y, end.x - start.x);
+        const delta = clockwise ? -Math.PI / 2 : Math.PI / 2;
+        centerX = midPoint.x + h * Math.cos(theta + delta);
+        centerY = midPoint.y + h * Math.sin(theta + delta);
+    } else {
+        console.error("Invalid arc: either I, J, or R parameter must be provided.");
+        return [start, end];
+    }
+
+    const startAngle = Math.atan2(start.y - centerY, start.x - centerX);
+    let endAngle = Math.atan2(end.y - centerY, end.x - centerX);
+    let deltaAngle;
+
+    if (clockwise) {
+        deltaAngle = endAngle <= startAngle ? startAngle - endAngle : startAngle - endAngle + 2 * Math.PI;
+    } else {
+        deltaAngle = endAngle >= startAngle ? endAngle - startAngle : endAngle - startAngle + 2 * Math.PI;
+    }
+    const segments = Math.max(Math.ceil(Math.abs(radius * deltaAngle) / 1), 10);
+
+    const arcPoints = [];
+    for (let i = 0; i <= segments; i++) {
+        const t = i / segments;
+        const angle = THREE.MathUtils.lerp(startAngle, startAngle + (clockwise ? -deltaAngle : deltaAngle), t);
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY + radius * Math.sin(angle);
+        arcPoints.push(new THREE.Vector3(x, y, start.z));
+    }
+
+    return arcPoints;
+}
 
 
 
