@@ -22,7 +22,6 @@
 
         .line {
             fill: none;
-            stroke: steelblue;
             stroke-width: 2px;
         }
     </style>
@@ -43,9 +42,17 @@
         const xAxis = d3.axisBottom(xScale);
         const yAxis = d3.axisLeft(yScale);
 
-        const line = d3.line()
-            .x(d => xScale(d.x))
+        const lineX = d3.line()
+            .x((d, i) => xScale(i))
+            .y(d => yScale(d.x));
+
+        const lineY = d3.line()
+            .x((d, i) => xScale(i))
             .y(d => yScale(d.y));
+
+        const lineZ = d3.line()
+            .x((d, i) => xScale(i))
+            .y(d => yScale(d.z));
 
         const svg = d3.select("body").append("svg")
             .attr("width", width + margin.left + margin.right)
@@ -53,7 +60,7 @@
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        svg.append("g")
+            svg.append("g")
             .attr("class", "x axis")
             .attr("transform", "translate(0," + height + ")")
             .call(xAxis);
@@ -64,13 +71,22 @@
 
         svg.append("path")
             .datum(toolpathData)
-            .attr("class", "line")
-            .attr("d", line);
+            .attr("class", "line lineX")
+            .attr("stroke", "red")
+            .attr("d", lineX);
 
-        init();
+        svg.append("path")
+            .datum(toolpathData)
+            .attr("class", "line lineY")
+            .attr("stroke", "green")
+            .attr("d", lineY);
 
-        function init() {
-        }
+        svg.append("path")
+            .datum(toolpathData)
+            .attr("class", "line lineZ")
+            .attr("stroke", "blue")
+            .attr("d", lineZ);
+
 
         window.addEventListener('message', (event) => {
             loadData(event);
@@ -95,18 +111,28 @@
         }
 
         function updateChart() {
-            xScale.domain(d3.extent(toolpathData, d => d.x));
-            yScale.domain(d3.extent(toolpathData, d => d.y));
+            xScale.domain([0, toolpathData.length - 1]);
+            yScale.domain([
+                d3.min(toolpathData, d => Math.min(d.x, d.y, d.z)),
+                d3.max(toolpathData, d => Math.max(d.x, d.y, d.z))
+            ]);
 
             svg.select(".x.axis")
                 .call(xAxis);
-
             svg.select(".y.axis")
                 .call(yAxis);
 
-            svg.select(".line")
+            svg.select(".lineX")
                 .datum(toolpathData)
-                .attr("d", line);
+                .attr("d", lineX);
+
+            svg.select(".lineY")
+                .datum(toolpathData)
+                .attr("d", lineY);
+
+            svg.select(".lineZ")
+                .datum(toolpathData)
+                .attr("d", lineZ);
         }
 
         function parseGcode(gcodeContent) {
