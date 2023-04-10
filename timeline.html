@@ -3,99 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Timeline</title>
+    <title>Toolpath Visualization</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         html,
         body {
             margin: 0;
             padding: 0;
-            overflow: hidden;
             height: 100%;
-        }
-
-        .axis path,
-        .axis line {
-            fill: none;
-            stroke: #000;
-            shape-rendering: crispEdges;
-        }
-
-        .line {
-            fill: none;
-            stroke-width: 2px;
         }
     </style>
 </head>
 <body>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script type="module">
-
+    <div id="chart"></div>
+    <script>
         let toolpathData = [];
-
-        const margin = { top: 20, right: 20, bottom: 30, left: 40 };
-        const width = window.innerWidth - margin.left - margin.right;
-        const height = window.innerHeight - margin.top - margin.bottom;
-
-        const xScale = d3.scaleLinear().range([0, width]);
-        const yScale = d3.scaleLinear().range([height, 0]);
-
-        const xAxis = d3.axisBottom(xScale);
-        const yAxis = d3.axisLeft(yScale);
-
-        const lineX = d3.line()
-            .x((d, i) => xScale(i))
-            .y(d => yScale(d.x));
-
-        const lineY = d3.line()
-            .x((d, i) => xScale(i))
-            .y(d => yScale(d.y));
-
-        const lineZ = d3.line()
-            .x((d, i) => xScale(i))
-            .y(d => yScale(d.z));
-
-        const svg = d3.select("body").append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-            svg.append("g")
-            .attr("class", "x axis")
-            .attr("transform", "translate(0," + height + ")")
-            .call(xAxis);
-
-        svg.append("g")
-            .attr("class", "y axis")
-            .call(yAxis);
-
-        svg.append("path")
-            .datum(toolpathData)
-            .attr("class", "line lineX")
-            .attr("stroke", "red")
-            .attr("d", lineX);
-
-        svg.append("path")
-            .datum(toolpathData)
-            .attr("class", "line lineY")
-            .attr("stroke", "green")
-            .attr("d", lineY);
-
-        svg.append("path")
-            .datum(toolpathData)
-            .attr("class", "line lineZ")
-            .attr("stroke", "blue")
-            .attr("d", lineZ);
-
-
-        window.addEventListener('message', (event) => {
-            loadData(event);
-        });
-
-        window.addEventListener('panelOpened', (event) => {
-            console.log('panelOpened');
-            loadData(event);
-        });
 
         // Load data
         function loadData(event) {
@@ -111,28 +33,39 @@
         }
 
         function updateChart() {
-            xScale.domain([0, toolpathData.length - 1]);
-            yScale.domain([
-                d3.min(toolpathData, d => Math.min(d.x, d.y, d.z)),
-                d3.max(toolpathData, d => Math.max(d.x, d.y, d.z))
-            ]);
+            const traceX = {
+              x: Array.from({ length: toolpathData.length }, (_, i) => i),
+              y: toolpathData.map(d => d.x),
+              mode: 'lines',
+              name: 'X',
+              line: { color: 'red' }
+            };
 
-            svg.select(".x.axis")
-                .call(xAxis);
-            svg.select(".y.axis")
-                .call(yAxis);
+            const traceY = {
+              x: Array.from({ length: toolpathData.length }, (_, i) => i),
+              y: toolpathData.map(d => d.y),
+              mode: 'lines',
+              name: 'Y',
+              line: { color: 'green' }
+            };
 
-            svg.select(".lineX")
-                .datum(toolpathData)
-                .attr("d", lineX);
+            const traceZ = {
+              x: Array.from({ length: toolpathData.length }, (_, i) => i),
+              y: toolpathData.map(d => d.z),
+              mode: 'lines',
+              name: 'Z',
+              line: { color: 'blue' }
+            };
 
-            svg.select(".lineY")
-                .datum(toolpathData)
-                .attr("d", lineY);
+            const layout = {
+              title: 'Toolpath Data',
+              xaxis: { title: 'Step' },
+              yaxis: { title: 'Value' },
+              autosize: true,
+              margin: { l: 50, r: 50, b: 50, t: 50 }
+            };
 
-            svg.select(".lineZ")
-                .datum(toolpathData)
-                .attr("d", lineZ);
+            Plotly.newPlot('chart', [traceX, traceY, traceZ], layout);
         }
 
         function parseGcode(gcodeContent) {
@@ -158,21 +91,16 @@
             return coordinates;
         }
 
-        window.addEventListener('resize', onWindowResize);
-        function onWindowResize() {
-            const newWidth = window.innerWidth - margin.left - margin.right;
-            const newHeight = window.innerHeight - margin.top - margin.bottom;
+        window.addEventListener('message', loadData);
+        window.addEventListener('panelOpened', loadData);
 
-            d3.select("body").select("svg")
-                .attr("width", newWidth + margin.left + margin.right)
-                .attr("height", newHeight + margin.top + margin.bottom);
-
-            xScale.range([0, newWidth]);
-            yScale.range([newHeight, 0]);
-
-            updateChart();
-        }
+        window.addEventListener('resize', () => {
+        const update = {
+            width: window.innerWidth,
+            height: window.innerHeight
+        };
+        Plotly.relayout('chart', update);
+    });
     </script>
 </body>
-
 </html>
