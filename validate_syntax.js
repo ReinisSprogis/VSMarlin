@@ -39,13 +39,16 @@ function validateEvent(document, diagnosticCollection) {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]; // line of text
-    // Remove comments
+    // Remove comments. As Error and warning will be ignored if parameter char is present in comments.
     const lineWithoutComments = line.replace(/;.*/, '');
-    // Validate G0 and G1
-    // Check for missing values
+ 
+    // Validate G0 and G1. Same rules for both.
     if (/^\s*G(0|1)/.test(lineWithoutComments)) {
       const xMissingValueRegex = /(\b(X|Y|Z|E|F|S))(?!\s*[+-]?\d+(\.\d*)?)/g;
 
+      //If there is no value for parameter, show error. 
+      // EXAMPLE: G0 X2 Y 
+      //will show error for Y are missing value.
       let match;
       while ((match = xMissingValueRegex.exec(lineWithoutComments)) !== null) {
         if (match[0] != null) {
@@ -57,6 +60,7 @@ function validateEvent(document, diagnosticCollection) {
         }
       }
 
+      //Showing warning if G0 or G1 is written without parameters.
       if (/^\s*G(0|1)\s*$/.test(lineWithoutComments)) {
         const start = new vscode.Position(i, lineWithoutComments.indexOf("G"));
         const end = new vscode.Position(i, lineWithoutComments.indexOf("G") + 2);
@@ -77,9 +81,8 @@ function validateEvent(document, diagnosticCollection) {
         diagnostics.push(diagnostic);
       });
 
+      ////Check for unknown parameters in line. Only X,Y,Z,E,F,S are valid parameters in G0 and G1
       const unknownParameterRegex = /(\b[^\sGMXYZEFS\d;\.+-])/g;
-
-
       let unknownMatch;
       while ((unknownMatch = unknownParameterRegex.exec(lineWithoutComments)) !== null ) {
         console.log("Unknown param: "+unknownMatch);
@@ -87,17 +90,33 @@ function validateEvent(document, diagnosticCollection) {
         const start = new vscode.Position(i, index);
         const end = new vscode.Position(i, index + 1);
         const range = new vscode.Range(start, end);
-        const diagnostic = new vscode.Diagnostic(range, 'WARNING: Unknown parameter ' + unknownMatch[0], vscode.DiagnosticSeverity.Warning);
+        const diagnostic = new vscode.Diagnostic(range, 'WARNING: Unknown parameter ' + unknownMatch[0] + '. Only X,Y,Z,E,F,S are valid parameters in G0 and G1', vscode.DiagnosticSeverity.Warning);
         diagnostics.push(diagnostic);
       }
-    }
 
-    
-    
+      //Check if S or E parameter is present in G0 line.
+      //If S or E is present in G0 line, show suggestion to replace G0 with G1
+      const G0Regex = /\bG0\s*/g;
+      const SOrERegex = /\b(S|E)\s*/g;
+      let matchG0;
+      let matchSOrE;
+      while ((matchG0 = G0Regex.exec(lineWithoutComments)) !== null && (matchSOrE = SOrERegex.exec(lineWithoutComments)) !== null) {
+        const start = new vscode.Position(i, matchG0.index);
+        const end = new vscode.Position(i, matchG0.index + 2);
+        const range = new vscode.Range(start, end);
+        const diagnostic = new vscode.Diagnostic(range, 'SUGGESTION: Keep using G0 for non-print / laser-cutting moves. Use G1 instead.', vscode.DiagnosticSeverity.Information);
+        diagnostics.push(diagnostic);
+      }
 
-
-    // Validate M code
-    if (/^\s*M/.test(lineWithoutComments)) {
+    }else if (/^\s*G(20|21)(?!\d)\s*(\S+)/.test(lineWithoutComments)) {
+      //All Gcodes that don't take any parameters. 
+      const start = new vscode.Position(i, lineWithoutComments.search(/\S/));
+      const end = new vscode.Position(i, lineWithoutComments.search(/\S/) + lineWithoutComments.trim().length);
+      const range = new vscode.Range(start, end);
+      const diagnostic = new vscode.Diagnostic(range, 'ERROR: No parameters for: G' + lineWithoutComments.trim().substring(1, 3), vscode.DiagnosticSeverity.Error);
+      diagnostics.push(diagnostic);
+    }else if (/^\s*M/.test(lineWithoutComments)) {
+      //Registers single M codes without number as Error M without number
       const missingMCodeRegex = /\bM(?!\d)/g;
       let matchM;
       while ((matchM = missingMCodeRegex.exec(lineWithoutComments)) !== null) {
@@ -105,7 +124,7 @@ function validateEvent(document, diagnosticCollection) {
           const start = new vscode.Position(i, matchM.index);
           const end = new vscode.Position(i, matchM.index + 1);
           const range = new vscode.Range(start, end);
-          const diagnostic = new vscode.Diagnostic(range, 'ERROR: Missing M code value', vscode.DiagnosticSeverity.Error);
+          const diagnostic = new vscode.Diagnostic(range, 'ERROR: Missing M code number', vscode.DiagnosticSeverity.Error);
           diagnostics.push(diagnostic);
         }
       }
