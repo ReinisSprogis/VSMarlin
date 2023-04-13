@@ -18,13 +18,16 @@ function validateAndProvideDiagnostics(context) {
 //Check for duplicate parameters in line by providing line nad regex such as EXAMPLE: /\b(X|Y|Z|E|F|S)/g
 function findDuplicateParameters(line, parameterRegex) {
   const parameters = {};
+  // Remove comments
+  const lineWithoutComments = line.replace(/;.*$/, '');
   let match;
-  while ((match = parameterRegex.exec(line)) !== null) {
+  while ((match = parameterRegex.exec(lineWithoutComments)) !== null) {
     const parameter = match[1];
     parameters[parameter] = (parameters[parameter] || 0) + 1;
   }
   return Object.keys(parameters).filter(param => parameters[param] > 1);
 }
+
 
 function validateEvent(document, diagnosticCollection) {
   const diagnostics = [];
@@ -34,21 +37,17 @@ function validateEvent(document, diagnosticCollection) {
     return;
   }
 
-
-
-
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]; // line of text
-
-    // Validate G0
+    // Remove comments
+    const lineWithoutComments = line.replace(/;.*/, '');
+    // Validate G0 and G1
     // Check for missing values
-    if (/^\s*G0/.test(line)) {
-      //console.log("G0 missing values: " + line);
+    if (/^\s*G(0|1)/.test(lineWithoutComments)) {
       const xMissingValueRegex = /(\b(X|Y|Z|E|F|S))(?!\s*[+-]?\d+(\.\d*)?)/g;
 
-
       let match;
-      while ((match = xMissingValueRegex.exec(line)) !== null) {
+      while ((match = xMissingValueRegex.exec(lineWithoutComments)) !== null) {
         if (match[0] != null) {
           const start = new vscode.Position(i, match.index);
           const end = new vscode.Position(i, match.index + 1);
@@ -58,38 +57,50 @@ function validateEvent(document, diagnosticCollection) {
         }
       }
 
-      if (/^\s*G0\s*$/.test(line)) {
-        const start = new vscode.Position(i, line.indexOf("G0"));
-        const end = new vscode.Position(i, line.indexOf("G0") + 2);
+      if (/^\s*G(0|1)\s*$/.test(lineWithoutComments)) {
+        const start = new vscode.Position(i, lineWithoutComments.indexOf("G"));
+        const end = new vscode.Position(i, lineWithoutComments.indexOf("G") + 2);
         const range = new vscode.Range(start, end);
-        const diagnostic = new vscode.Diagnostic(range, 'WARNING: Missing parameters for G0', vscode.DiagnosticSeverity.Warning);
+        const diagnostic = new vscode.Diagnostic(range, 'WARNING: Missing parameters for ' + lineWithoutComments.trim(), vscode.DiagnosticSeverity.Warning);
         diagnostics.push(diagnostic);
       }
 
-
       // Check for duplicate parameters
       const parameterRegex = /\b(X|Y|Z|E|F|S)/g;
-      const duplicateParameters = findDuplicateParameters(line, parameterRegex);
+      const duplicateParameters = findDuplicateParameters(lineWithoutComments, parameterRegex);
       duplicateParameters.forEach(param => {
-        const index = line.indexOf(param);
+        const index = lineWithoutComments.indexOf(param);
         const start = new vscode.Position(i, index);
         const end = new vscode.Position(i, index + 1);
         const range = new vscode.Range(start, end);
         const diagnostic = new vscode.Diagnostic(range, 'ERROR: Duplicate ' + param + ' value', vscode.DiagnosticSeverity.Error);
         diagnostics.push(diagnostic);
       });
+
+      const unknownParameterRegex = /(\b[^\sGMXYZEFS\d;\.+-])/g;
+
+
+      let unknownMatch;
+      while ((unknownMatch = unknownParameterRegex.exec(lineWithoutComments)) !== null ) {
+        console.log("Unknown param: "+unknownMatch);
+        const index = unknownMatch.index;
+        const start = new vscode.Position(i, index);
+        const end = new vscode.Position(i, index + 1);
+        const range = new vscode.Range(start, end);
+        const diagnostic = new vscode.Diagnostic(range, 'WARNING: Unknown parameter ' + unknownMatch[0], vscode.DiagnosticSeverity.Warning);
+        diagnostics.push(diagnostic);
+      }
     }
 
-    //
+    
+    
 
-    //****Validate M code */
-    // check for missing M code value any where in the line
+
     // Validate M code
-    // Check for missing M code value anywhere in the line
-    if (/^\s*M/.test(line)) {
+    if (/^\s*M/.test(lineWithoutComments)) {
       const missingMCodeRegex = /\bM(?!\d)/g;
       let matchM;
-      while ((matchM = missingMCodeRegex.exec(line)) !== null) {
+      while ((matchM = missingMCodeRegex.exec(lineWithoutComments)) !== null) {
         if (matchM[0] != null) {
           const start = new vscode.Position(i, matchM.index);
           const end = new vscode.Position(i, matchM.index + 1);
@@ -99,13 +110,11 @@ function validateEvent(document, diagnosticCollection) {
         }
       }
     }
-    // diagnostics.push(...validateLine(line, i));
-
   }
 
   diagnosticCollection.set(document.uri, diagnostics);
-
 }
+
 
 function getChangedLines(contentChanges) {
   const changedLines = new Set();
