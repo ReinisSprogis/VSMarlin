@@ -231,7 +231,8 @@
 
             //***Scene***//
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x565656);
+          //  scene.background = new THREE.Color(0x565656);
+            scene.background = new THREE.Color(0x000000);
 
             //***Renderer***//
             renderer = new THREE.WebGLRenderer({
@@ -302,8 +303,16 @@
 
             //***Actions***//
             //Slider
-            const pointsMaterial = new THREE.PointsMaterial({ size: 0.5, color: 0xff0000 });
-            const lineMaterial = new THREE.LineBasicMaterial({ color: 0x05c4bc, });
+            function getRandomColor() {
+  const letters = '0123456789ABCDEF';
+  let color = '#';
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+}
+            const pointsMaterial = new THREE.PointsMaterial({ size: 0.1, color: getRandomColor() });
+            const lineMaterial = new THREE.LineBasicMaterial({ color: 0x05c4bc, linewidth: 1,});
             //Shwing points within range
             rangeSiderEnd.addEventListener("input", updateGeometry);
             rangeSiderStart.addEventListener("input", updateGeometry);
@@ -343,7 +352,7 @@
                     const allSelected = selectionBox.select();
 
                     for (let i = 0; i < allSelected.length; i++) {
-                        allSelected[i].material.color.set(0xffffff);
+                       // allSelected[i].material.color.set(0xffffff);
                     }
                 }
             });
@@ -637,6 +646,62 @@
             }
 
             return new THREE.BufferGeometry().setFromPoints(arcPoints);
+        }
+
+        //Global variables will be moved to program beginning. 
+        
+        function parseGcodeProgram(gcodeContent) {
+            const lines = gcodeContent.split("\n");
+            const coordinates = [];
+            var current = new THREE.Vector3();
+            let lastCommand = "";
+
+            for (var line of lines) {
+                const command = line.split(" ")[0].toUpperCase();
+                
+                //Sets the feed rate for subsequent moves. 
+                //Traces straight line from point to point.
+                //G1 includes extrusion E, but not necessarily.
+                //G0 Usually doesn't include extrusion E.
+                if (command === "G1" || command === "G0") {
+                    const matchX = line.match(/X(-?\d+(\.\d+)?)/);
+                    const matchY = line.match(/Y(-?\d+(\.\d+)?)/);
+                    const matchZ = line.match(/Z(-?\d+(\.\d+)?)/);
+
+                    const newX = matchX ? parseFloat(matchX[1]) : current.x;
+                    const newY = matchY ? parseFloat(matchY[1]) : current.y;
+                    const newZ = matchZ ? parseFloat(matchZ[1]) : current.z;
+
+                    const next = new THREE.Vector3(newX, newY, newZ);
+                    coordinates.push(current, next);
+                    current = next;
+                    lastCommand = command;
+                } else if (command === "G2" || command === "G3") {
+                    const matchX = line.match(/X(-?\d+(\.\d+)?)/);
+                    const matchY = line.match(/Y(-?\d+(\.\d+)?)/);
+                    const matchZ = line.match(/Z(-?\d+(\.\d+)?)/);
+                    const matchI = line.match(/I(-?\d+(\.\d+)?)/);
+                    const matchJ = line.match(/J(-?\d+(\.\d+)?)/);
+                    const matchR = line.match(/R(-?\d+(\.\d+)?)/);
+
+                    const newX = matchX ? parseFloat(matchX[1]) : current.x;
+                    const newY = matchY ? parseFloat(matchY[1]) : current.y;
+                    const newZ = matchZ ? parseFloat(matchZ[1]) : current.z;
+                    const I = matchI ? parseFloat(matchI[1]) : null;
+                    const J = matchJ ? parseFloat(matchJ[1]) : null;
+                    const R = matchR ? parseFloat(matchR[1]) : null;
+
+                    const clockwise = command === "G2";
+
+                    const arcPoints = computeArcPoints(current, newX, newY, newZ, I, J, R, clockwise);
+
+                    coordinates.push(...arcPoints);
+                    current = arcPoints[arcPoints.length - 1];
+                    lastCommand = command;
+                }
+            }
+
+            return coordinates;
         }
 
         window.addEventListener('resize', onWindowResize);

@@ -16,18 +16,23 @@ function hoverInfoActivate(context) {
             
 
             const getMarkdownFromFile = (filePath) => {
-                return new Promise((resolve, reject) => {
-                    fs.readFile(filePath, 'utf8', (err, data) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            const markdownString = md.render(data);
-                            const hoverMarkdownString = new vscode.MarkdownString(markdownString, true);
-                            hoverMarkdownString.supportHtml = true;
-                            resolve(new vscode.Hover(hoverMarkdownString));
-                        }
+                try {
+                    return new Promise((resolve, reject) => {
+                        fs.readFile(filePath, 'utf8', (err, data) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                const markdownString = md.render(data);
+                                const hoverMarkdownString = new vscode.MarkdownString(markdownString, true);
+                                hoverMarkdownString.supportHtml = true;
+                                resolve(new vscode.Hover(hoverMarkdownString));
+                            }
+                        });
                     });
-                });
+                } catch (e) {
+                     return; // Return early if the word is empty or whitespace
+                }
+                
             };
            
             if (word.length > 5) {
@@ -43,7 +48,6 @@ function hoverInfoActivate(context) {
             //The same for M commands.
             //If no match is found, then no markup and hover info are shown. M29 M34 M665 M666 
             //Need to solve a way for G029 like files where multiple files are needed to be read for the same keyword.
-
             //G0/G1
             if (word == 'G0' || word == 'G00' || word == 'G1' || word == 'G01' || word == 'G001') {
                 const gcodeFile = path.join(__dirname, 'MarlinDocumentation-master', '_gcode', 'G000-G001.md');

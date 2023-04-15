@@ -21,16 +21,30 @@
 
         // Load data
         function loadData(event) {
-            const message = event.data;
-            if (message.type === 'updateToolpath') {
-                const uri = message.uri;
-                const gcodeContent = message.gcodeContent;
+    const message = event.data;
+    if (message.type === 'updateToolpath') {
+        const uri = message.uri;
+        const gcodeContent = message.gcodeContent;
 
-                // Parse the G-code content and update the toolpath
-                toolpathData = parseGcode(gcodeContent);
-                updateChart();
-            }
-        }
+        // Parse the G-code content and update the toolpath
+        toolpathData = parseGcode(gcodeContent);
+        updateChart();
+
+        // Add click event listener to the Plotly chart
+        const chart = document.getElementById('chart');
+        chart.on('plotly_click', function(data) {
+            const pointIndex = data.points[0].pointNumber;
+            const lineNumber = pointIndex + 1;
+
+            // Send message to extension with line number
+            window.parent.postMessage({
+                command: 'jumpToLine',
+                lineNumber: lineNumber
+            }, '*');
+        });
+    }
+}
+
 
         function updateChart() {
             const traceX = {

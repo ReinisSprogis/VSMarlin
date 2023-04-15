@@ -32,8 +32,7 @@ function timeline(context){
         const uri = document.uri.toString();
         const fileName = path.basename(document.fileName);
         const randomColor = getRandomColor();
-    
-    
+
         const panel = vscode.window.createWebviewPanel(
           'toolpathView',
           'Toolpath: ' + fileName,
@@ -43,6 +42,7 @@ function timeline(context){
           }
         );
     
+
         if (panelColors[uri] === undefined) {
           panelColors[uri] = randomColor;
         }
