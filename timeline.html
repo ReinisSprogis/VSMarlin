@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,6 +15,7 @@
         }
     </style>
 </head>
+
 <body>
     <div id="chart"></div>
     <script>
@@ -21,71 +23,94 @@
 
         // Load data
         function loadData(event) {
-    const message = event.data;
-    if (message.type === 'updateToolpath') {
-        const uri = message.uri;
-        const gcodeContent = message.gcodeContent;
+            const message = event.data;
+            if (message.type === 'updateToolpath') {
+                const uri = message.uri;
+                const gcodeContent = message.gcodeContent;
 
-        // Parse the G-code content and update the toolpath
-        toolpathData = parseGcode(gcodeContent);
-        updateChart();
+                // Parse the G-code content and update the toolpath
+                toolpathData = parseGcode(gcodeContent);
+                updateChart();
 
-        // Add click event listener to the Plotly chart
-        const chart = document.getElementById('chart');
-        chart.on('plotly_click', function(data) {
-            const pointIndex = data.points[0].pointNumber;
-            const lineNumber = pointIndex + 1;
+                // Add click event listener to the Plotly chart
+                const chart = document.getElementById('chart');
+                chart.on('plotly_click', function (data) {
+                    const pointIndex = data.points[0].pointNumber;
+                    const lineNumber = pointIndex + 1;
 
-            // Send message to extension with line number
-            window.parent.postMessage({
-                command: 'jumpToLine',
-                lineNumber: lineNumber
-            }, '*');
-        });
-    }
-}
+                    // Send message to extension with line number
+                    window.parent.postMessage({
+                        command: 'jumpToLine',
+                        lineNumber: lineNumber
+                    }, '*');
+                });
+            }
+        }
 
 
         function updateChart() {
             const traceX = {
-              x: Array.from({ length: toolpathData.length }, (_, i) => i),
-              y: toolpathData.map(d => d.x),
-              mode: 'lines',
-              name: 'X',
-              line: { color: 'red' }
+                x: Array.from({ length: toolpathData.length }, (_, i) => i),
+                y: toolpathData.map(d => d.x),
+                mode: 'lines',
+                name: 'X',
+                line: { color: 'red' }
             };
 
             const traceY = {
-              x: Array.from({ length: toolpathData.length }, (_, i) => i),
-              y: toolpathData.map(d => d.y),
-              mode: 'lines',
-              name: 'Y',
-              line: { color: 'green' }
+                x: Array.from({ length: toolpathData.length }, (_, i) => i),
+                y: toolpathData.map(d => d.y),
+                mode: 'lines',
+                name: 'Y',
+                line: { color: 'green' }
             };
 
             const traceZ = {
-              x: Array.from({ length: toolpathData.length }, (_, i) => i),
-              y: toolpathData.map(d => d.z),
-              mode: 'lines',
-              name: 'Z',
-              line: { color: 'blue' }
+                x: Array.from({ length: toolpathData.length }, (_, i) => i),
+                y: toolpathData.map(d => d.z),
+                mode: 'lines',
+                name: 'Z',
+                line: { color: 'blue' }
             };
 
+            const traceE = {
+                x: Array.from({ length: toolpathData.length }, (_, i) => i),
+                y: toolpathData.map(d => d.e),
+                mode: 'lines',
+                name: 'E',
+                line: { color: 'purple' }
+            };
+
+            const traceF = {
+                x: Array.from({ length: toolpathData.length }, (_, i) => i),
+                y: toolpathData.map(d => d.f),
+                mode: 'lines',
+                name: 'F',
+                line: { color: 'orange' }
+            };
+
+            const traceS = {
+                x: Array.from({ length: toolpathData.length }, (_, i) => i),
+                y: toolpathData.map(d => d.s),
+                mode: 'lines',
+                name: 'S',
+                line: { color: 'pink' }
+            };
             const layout = {
-              title: 'Toolpath Data',
-              xaxis: { title: 'Step' },
-              yaxis: { title: 'Value' },
-              autosize: true,
-              margin: { l: 50, r: 50, b: 50, t: 50 }
+                title: 'Toolpath Data',
+                xaxis: { title: 'Step' },
+                yaxis: { title: 'Value' },
+                autosize: true,
+                margin: { l: 50, r: 50, b: 50, t: 50 }
             };
-
-            Plotly.newPlot('chart', [traceX, traceY, traceZ], layout);
+          
+            Plotly.newPlot('chart', [traceX, traceY, traceZ, traceE, traceF, traceS], layout);
         }
 
         function parseGcode(gcodeContent) {
             const lines = gcodeContent.split("\n");
             const coordinates = [];
-            var current = { x: 0, y: 0, z: 0 };
+            var current = { x: 0, y: 0, z: 0, e: 0, f: 0, s: 0 };
             let lastCommand = "";
             for (var line of lines) {
                 const command = line.split(" ")[0].toUpperCase();
@@ -93,10 +118,16 @@
                     const matchX = line.match(/X(-?\d+(\.\d+)?)/);
                     const matchY = line.match(/Y(-?\d+(\.\d+)?)/);
                     const matchZ = line.match(/Z(-?\d+(\.\d+)?)/);
+                    const matchE = line.match(/E(-?\d+(\.\d+)?)/);
+                    const matchF = line.match(/F(-?\d+(\.\d+)?)/);
+                    const matchS = line.match(/S(-?\d+(\.\d+)?)/);
                     const newX = matchX ? parseFloat(matchX[1]) : current.x;
                     const newY = matchY ? parseFloat(matchY[1]) : current.y;
                     const newZ = matchZ ? parseFloat(matchZ[1]) : current.z;
-                    const next = { x: newX, y: newY, z: newZ };
+                    const newE = matchE ? parseFloat(matchE[1]) : current.e;
+                    const newF = matchF ? parseFloat(matchF[1]) : current.f;
+                    const newS = matchS ? parseFloat(matchS[1]) : current.s;
+                    const next = { x: newX, y: newY, z: newZ, e: newE, f: newF, s: newS };
                     coordinates.push(next);
                     current = next;
                     lastCommand = command;
@@ -109,12 +140,13 @@
         window.addEventListener('panelOpened', loadData);
 
         window.addEventListener('resize', () => {
-        const update = {
-            width: window.innerWidth,
-            height: window.innerHeight
-        };
-        Plotly.relayout('chart', update);
-    });
+            const update = {
+                width: window.innerWidth,
+                height: window.innerHeight
+            };
+            Plotly.relayout('chart', update);
+        });
     </script>
 </body>
+
 </html>
