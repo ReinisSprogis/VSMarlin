@@ -70,7 +70,7 @@ function checkForDuplicateParameters(currentLineNumber, lineWithoutComments, par
 function checkForUnknownParameters(currentLineNumber, lineWithoutComments, unknownParameterRegex, diagnostics) {
   let unknownMatch;
   while ((unknownMatch = unknownParameterRegex.exec(lineWithoutComments)) !== null) {
-    console.log("Unknown param: " + unknownMatch);
+   // console.log("Unknown param: " + unknownMatch);
     const index = unknownMatch.index;
     const start = new vscode.Position(currentLineNumber, index);
     const end = new vscode.Position(currentLineNumber, index + 1);
@@ -112,7 +112,7 @@ function validateEvent(document, diagnosticCollection) {
 
       ////Check for unknown parameters in line. Only X,Y,Z,E,F,S are valid parameters in G0 and G1
       const unknownParameterRegex = /(\b[^\sGMXYZEFS;\.+-]\d)/g;
-      checkForUnknownParameters(currentLineNumber, lineWithoutComments, unknownParameterRegex, diagnostics);
+     // checkForUnknownParameters(currentLineNumber, lineWithoutComments, unknownParameterRegex, diagnostics);
 
 
       //Check if S or E parameter is present in G0 line.

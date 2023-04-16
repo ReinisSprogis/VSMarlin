@@ -6,13 +6,13 @@ const md = new MarkdownIt();
 
 //This function provides information on hovering over keywords
 function hoverInfoActivate(context) {
-    console.log('hoverInfoActivate is activated!');
+   // console.log('hoverInfoActivate is activated!');
 
     const hoverProvider = vscode.languages.registerHoverProvider('marlin', {
         provideHover(document, position, token) {
             const range = document.getWordRangeAtPosition(position);
             const word = document.getText(range);
-            console.log("Word: " + word);
+           // console.log("Word: " + word);
             
 
             const getMarkdownFromFile = (filePath) => {
@@ -87,7 +87,7 @@ function hoverInfoActivate(context) {
                 return getMarkdownFromFile(gcodeFile);
             //T1 T2    
             }else if (/T\d+/.test(word)){
-                console.log('T found:' + word);
+                //console.log('T found:' + word);
                 const gcodeFile = path.join(__dirname, 'MarlinDocumentation-master', '_gcode', 'T001-T002.md');
                 return getMarkdownFromFile(gcodeFile);
             }

@@ -149,7 +149,7 @@
         });
 
         function handleFileUpload(file) {
-            console.log(`File dropped: ${file.name}`);
+           // console.log(`File dropped: ${file.name}`);
             // Pass the file to the handleFileUpload function in the module script
             handleFileUploadInModule(file);
         }
@@ -204,7 +204,7 @@
         scene.add(directionalLight);
         // Add this function to your module script
         window.handleFileUploadInModule = function (file) {
-            console.log(`Handling file upload in module: ${file.name}`);
+           // console.log(`Handling file upload in module: ${file.name}`);
 
             stlLoader = new STLLoader();
             stlLoader.load(URL.createObjectURL(file), function (geometry) {
@@ -232,7 +232,7 @@
             //***Scene***//
             scene = new THREE.Scene();
           //  scene.background = new THREE.Color(0x565656);
-            scene.background = new THREE.Color(0x000000);
+            scene.background = new THREE.Color(0x565656);
 
             //***Renderer***//
             renderer = new THREE.WebGLRenderer({
@@ -311,7 +311,7 @@
   }
   return color;
 }
-            const pointsMaterial = new THREE.PointsMaterial({ size: 0.1, color: getRandomColor() });
+            const pointsMaterial = new THREE.PointsMaterial({ size: 0.5, color: getRandomColor() });
             const lineMaterial = new THREE.LineBasicMaterial({ color: 0x05c4bc, linewidth: 1,});
             //Shwing points within range
             rangeSiderEnd.addEventListener("input", updateGeometry);
@@ -392,7 +392,7 @@
         });
 
         window.addEventListener('panelOpened', (event) => {
-            console.log('panelOpened');
+           // console.log('panelOpened');
             loadData(event);
 
         });
@@ -404,7 +404,7 @@
                     loadData(event);
                     break;
                 case 'visibleLines':
-                    console.log("Message received" + message.visibleLines.start + "," + message.visibleLines.end);
+                   // console.log("Message received" + message.visibleLines.start + "," + message.visibleLines.end);
                     handleVisibleLines(message.visibleLines);
                     break;
             }

@@ -25,48 +25,45 @@
       }
     }
   ],
-  
-    "commands": [
+  "commands": [
+    {
+      "command": "marlin.showToolpath",
+      "title": "Show Toolpath"
+    }
+  ],
+  "contributes": {
+    "keybindings": [
       {
         "command": "marlin.showToolpath",
-        "title": "Show Toolpath"
+        "key": "ctrl+alt+r",
+        "mac": "cmd+alt+r",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "marlin.connect",
+        "key": "ctrl+alt+c",
+        "mac": "cmd+alt+c",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "marlin.sendCommand",
+        "key": "ctrl+alt+s",
+        "mac": "cmd+alt+s",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "marlin.showNodes",
+        "key": "ctrl+alt+n",
+        "mac": "cmd+alt+s",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "marlin.showTimeline",
+        "key": "ctrl+alt+t",
+        "mac": "cmd+alt+t",
+        "when": "editorTextFocus"
       }
     ],
-   
-
-    "contributes": {
-      "keybindings": [
-        {
-          "command": "marlin.showToolpath",
-          "key": "ctrl+alt+r",
-          "mac": "cmd+alt+r",
-          "when": "editorTextFocus"
-        },
-        {
-          "command": "marlin.connect",
-          "key": "ctrl+alt+c",
-          "mac": "cmd+alt+c",
-          "when": "editorTextFocus"
-        },
-        {
-          "command": "marlin.sendCommand",
-          "key": "ctrl+alt+s",
-          "mac": "cmd+alt+s",
-          "when": "editorTextFocus"
-        },
-        {
-          "command": "marlin.showNodes",
-          "key": "ctrl+alt+n",
-          "mac": "cmd+alt+s",
-          "when": "editorTextFocus"
-        },
-        {
-          "command": "marlin.showTimeline",
-          "key": "ctrl+alt+t",
-          "mac": "cmd+alt+t",
-          "when": "editorTextFocus"
-        }
-      ],
     "languages": [
       {
         "id": "marlin",
@@ -83,17 +80,18 @@
         "configuration": "./language-configuration.json"
       }
     ],
-    "snippets": [
-      {
-        "language": "marlin",
-        "path": "snippets\\gcode_snippets.json"
-      }
-    ],
+    
+  
     "grammars": [
       {
         "language": "marlin",
         "scopeName": "source.gcode",
         "path": "./syntaxes/.gcode.tmLanguage.json"
+      }
+    ], "snippets": [
+      {
+        "language": "marlin",
+        "path": "./snippets/gcode_snippets.json"
       }
     ],
     "configurationDefaults": {
