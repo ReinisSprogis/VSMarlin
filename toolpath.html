@@ -149,7 +149,7 @@
         });
 
         function handleFileUpload(file) {
-           // console.log(`File dropped: ${file.name}`);
+            // console.log(`File dropped: ${file.name}`);
             // Pass the file to the handleFileUpload function in the module script
             handleFileUploadInModule(file);
         }
@@ -204,7 +204,7 @@
         scene.add(directionalLight);
         // Add this function to your module script
         window.handleFileUploadInModule = function (file) {
-           // console.log(`Handling file upload in module: ${file.name}`);
+            // console.log(`Handling file upload in module: ${file.name}`);
 
             stlLoader = new STLLoader();
             stlLoader.load(URL.createObjectURL(file), function (geometry) {
@@ -231,7 +231,7 @@
 
             //***Scene***//
             scene = new THREE.Scene();
-          //  scene.background = new THREE.Color(0x565656);
+            //  scene.background = new THREE.Color(0x565656);
             scene.background = new THREE.Color(0x565656);
 
             //***Renderer***//
@@ -304,15 +304,15 @@
             //***Actions***//
             //Slider
             function getRandomColor() {
-  const letters = '0123456789ABCDEF';
-  let color = '#';
-  for (let i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
-}
+                const letters = '0123456789ABCDEF';
+                let color = '#';
+                for (let i = 0; i < 6; i++) {
+                    color += letters[Math.floor(Math.random() * 16)];
+                }
+                return color;
+            }
             const pointsMaterial = new THREE.PointsMaterial({ size: 0.5, color: getRandomColor() });
-            const lineMaterial = new THREE.LineBasicMaterial({ color: 0x05c4bc, linewidth: 1,});
+            const lineMaterial = new THREE.LineBasicMaterial({ color: 0x05c4bc, linewidth: 1, });
             //Shwing points within range
             rangeSiderEnd.addEventListener("input", updateGeometry);
             rangeSiderStart.addEventListener("input", updateGeometry);
@@ -352,7 +352,7 @@
                     const allSelected = selectionBox.select();
 
                     for (let i = 0; i < allSelected.length; i++) {
-                       // allSelected[i].material.color.set(0xffffff);
+                        // allSelected[i].material.color.set(0xffffff);
                     }
                 }
             });
@@ -391,20 +391,18 @@
             loadData(event);
         });
 
-        window.addEventListener('panelOpened', (event) => {
-           // console.log('panelOpened');
-            loadData(event);
 
-        });
+
 
         window.addEventListener('message', (event) => {
+            console.log("Message received.Panels opened");
             const message = event.data;
             switch (message.type) {
                 case 'updateToolpath':
                     loadData(event);
                     break;
                 case 'visibleLines':
-                   // console.log("Message received" + message.visibleLines.start + "," + message.visibleLines.end);
+                    // console.log("Message received" + message.visibleLines.start + "," + message.visibleLines.end);
                     handleVisibleLines(message.visibleLines);
                     break;
             }
@@ -604,6 +602,7 @@
             points.geometry = pointsGeometry;
         }
 
+
         function animate() {
             requestAnimationFrame(animate);
             // Update controls and transformation
@@ -649,7 +648,7 @@
         }
 
         //Global variables will be moved to program beginning. 
-        
+
         function parseGcodeProgram(gcodeContent) {
             const lines = gcodeContent.split("\n");
             const coordinates = [];
@@ -658,7 +657,7 @@
 
             for (var line of lines) {
                 const command = line.split(" ")[0].toUpperCase();
-                
+
                 //Sets the feed rate for subsequent moves. 
                 //Traces straight line from point to point.
                 //G1 includes extrusion E, but not necessarily.

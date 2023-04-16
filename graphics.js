@@ -92,7 +92,6 @@ async function graphics(context) {
     //This will further extend to feedback from changes in three.js wil be sent to gcode files. TODO: implement this
     panel.webview.html = getToolpathHtml();
 
-
     // called when graphics panel is closed
     // Remove panel from panels array to add new color to panelColors array when new panel is created.
     panel.onDidDispose(
