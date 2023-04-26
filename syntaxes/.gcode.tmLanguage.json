@@ -18,6 +18,18 @@
 			"include": "#positionZ"
 		},
 		{
+			"include": "#positionP"
+		},
+		{
+			"include": "#positionR"
+		},
+		{
+			"include": "#positionI"
+		},
+		{
+			"include": "#positionJ"
+		},
+		{
 			"include": "#positioning.linear"
 		},
 		{
@@ -65,7 +77,7 @@
 				{
 					"name": "keyword.control.positionX",
 					"match": "\\b(X|X[-0-9.]+)\\b"
-				}
+				  }
 			]
 		},
 		"positionY": {
@@ -73,7 +85,7 @@
 				{
 					"name": "keyword.control.positionY",
 					"match": "\\b(Y|Y[-0-9.]+)\\b"
-				}
+				  }
 			]
 		},
 		"positionZ": {
@@ -81,6 +93,38 @@
 				{
 					"name": "keyword.control.positionZ",
 					"match": "\\b(Z|Z[-0-9.]+)\\b"
+				}
+			]
+		},
+		"positionP": {
+			"patterns": [
+				{
+					"name": "keyword.control.positionP",
+					"match": "\\b(P|P[-0-9.]+)\\b"
+				}
+			]
+		},
+		"positionR": {
+			"patterns": [
+				{
+					"name": "keyword.control.positionR",
+					"match": "\\b(R|R[-0-9.]+)\\b"
+				}
+			]
+		},
+		"positionI": {
+			"patterns": [
+				{
+					"name": "keyword.control.positionI",
+					"match": "\\b(I|I[-0-9.]+)\\b"
+				}
+			]
+		},
+		"positionJ": {
+			"patterns": [
+				{
+					"name": "keyword.control.positionJ",
+					"match": "\\b(J|J[-0-9.]+)\\b"
 				}
 			]
 		},
