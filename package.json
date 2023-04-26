@@ -80,15 +80,14 @@
         "configuration": "./language-configuration.json"
       }
     ],
-    
-  
     "grammars": [
       {
         "language": "marlin",
         "scopeName": "source.gcode",
         "path": "./syntaxes/.gcode.tmLanguage.json"
       }
-    ], "snippets": [
+    ],
+    "snippets": [
       {
         "language": "marlin",
         "path": "./snippets/gcode_snippets.json"
@@ -128,6 +127,36 @@
             "scope": "keyword.control.positionZ",
             "settings": {
               "foreground": "#76eaff",
+              "fontStyle": "bold"
+            }
+          },
+          {
+            "name": "Pposition",
+            "scope": "keyword.control.positionP",
+            "settings": {
+              "foreground": "#c66ef8c2",
+              "fontStyle": "bold"
+            }
+          },
+          {
+            "name": "Rposition",
+            "scope": "keyword.control.positionR",
+            "settings": {
+              "foreground": "#e49c3e",
+              "fontStyle": "bold"
+            }
+          },{
+            "name": "Iposition",
+            "scope": "keyword.control.positionI",
+            "settings": {
+              "foreground": "#ff8888c2",
+              "fontStyle": "bold"
+            }
+          },{
+            "name": "Jposition",
+            "scope": "keyword.control.positionJ",
+            "settings": {
+              "foreground": "#77f18b",
               "fontStyle": "bold"
             }
           },
