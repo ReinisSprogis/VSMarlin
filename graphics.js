@@ -30,7 +30,7 @@ async function graphics(context) {
     const editor = vscode.window.activeTextEditor;
     const visibleLines = getVisibleLines(editor);
     const uri = editor.document.uri.toString();
-   console.log("visibleLines: " + visibleLines.start + " - " + visibleLines.end);
+   //console.log("visibleLines: " + visibleLines.start + " - " + visibleLines.end);
     panels.forEach((panel) => {
       if (panel && panel.webview && panel.uri === uri) {
         console.log("send visibleLines to webview");
