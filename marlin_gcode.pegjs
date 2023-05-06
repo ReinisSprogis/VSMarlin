@@ -144,6 +144,7 @@ command
     g26Command /
     g27Command /
     g28Command /
+    g30Command /
     noParamGCommand
     ) ws? { return c; }
 
@@ -716,4 +717,45 @@ g28Parameter
   / p:"X" v:flag ws?{ return makeParameter(p, v, location()); }
   / p:"Y" v:flag ws?{ return makeParameter(p, v, location()); }
   / p:"Z" v:flag ws?{ return makeParameter(p, v, location()); }
+
+  //G29 [A<bool>] [C<bool>] [D<bool>] [E<bool>] [J<bool>] [O] [Q<bool>] [V<0-4>]
+  //G29 [A<bool>] [B<linear>] [C<bool>] [D<bool>] [E<bool>] [F<linear>] [H<linear>] [J<bool>] [L<linear>] [O] [P<int>] [Q<bool>] [R<linear>] [S<rate>] [T<bool>] [V<0-4>] [X<int>] [Y<int>]
+  //G29 [I<index>] [J<index>] S<0|1|2|3|4|5> [X<count>] [Y<count>] [Z<linear>]
+  //G29 [A<bool>] [B<linear>] [C<bool>] [D<bool>] [E<bool>] [F<linear>] [H<linear>] [J<bool>] [L<linear>] [O] [Q<bool>] [R<linear>] [S<rate>] [V<0-4>] [W<bool>] [X<int/float>] [Y<int/float>] [Z<float>]
+  //G29 [A] [B<mm/flag>] [C<bool/float>] [D] [E] [F<linear>] [H<linear>] [I<int>] [J<int>] [K<index>] [L<index>] [P<0|1|2|3|4|5|6>] [Q<index>] [R<int>] [S<slot>] [T<0|1>] [U] [V<0|1|2|3|4>] [W] [X<linear>] [Y<linear>]
+  //Todo: Implement. Too complecated for now.
+
+  //G30 [C<bool>] [E<bool>] [X<pos>] [Y<pos>]
+  g30Command
+    = "G30" !integer ws? params:g30Parameter* {
+        const errors = []; 
+        const duplicates = findDuplicateParameters(params);
+        //If there are any duplicate parameters, push an error to the errors array.
+        if (duplicates.length > 0) {
+          errors.push({
+            type: 'duplicate_parameters',
+            command: 'G30',
+            duplicates: duplicates,
+            location: {
+              start: location().start,
+              end: location().end,
+            },
+          });
+        }
+        return {
+          command: "G30",
+          parameters: params,
+          errors: errors.length > 0 ? errors : null, 
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        };
+      }
+
+  g30Parameter
+    = p:"C" v:bool ws?{ return makeParameter(p, v, location()); }
+    / p:"E" v:bool ws?{ return makeParameter(p, v, location()); }
+    / p:"X" v:number ws?{ return makeParameter(p, v, location()); }
+    / p:"Y" v:number ws?{ return makeParameter(p, v, location()); }
   
