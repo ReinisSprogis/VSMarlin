@@ -143,6 +143,7 @@ command
     g12Command /
     g26Command /
     g27Command /
+    g28Command /
     noParamGCommand
     ) ws? { return c; }
 
@@ -679,3 +680,40 @@ g26Parameter
 
   g27Parameter
     = p:"P" v:("1"/ "2" / "3") ws?{ return makeParameter(p, v, location()); }
+
+//G28 [L] [O] [R] [X] [Y] [Z]
+g28Command
+  = "G28" !integer ws? params:g28Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: 'G28',
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "G28",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start,
+          end: location().end,
+        },
+      };
+    }
+
+g28Parameter
+  = p:"L" v:flag ws?{ return makeParameter(p, v, location()); }
+  / p:"O" v:flag ws?{ return makeParameter(p, v, location()); }
+  / p:"R" v:flag ws?{ return makeParameter(p, v, location()); }
+  / p:"X" v:flag ws?{ return makeParameter(p, v, location()); }
+  / p:"Y" v:flag ws?{ return makeParameter(p, v, location()); }
+  / p:"Z" v:flag ws?{ return makeParameter(p, v, location()); }
+  
