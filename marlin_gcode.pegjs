@@ -145,6 +145,7 @@ command
     g27Command /
     g28Command /
     g30Command /
+    g33Command /
     noParamGCommand
     ) ws? { return c; }
 
@@ -759,3 +760,40 @@ g28Parameter
     / p:"X" v:number ws?{ return makeParameter(p, v, location()); }
     / p:"Y" v:number ws?{ return makeParameter(p, v, location()); }
   
+//G33 [C<float>] [E<bool>] [F<1-30>] [O<bool>] [P<|0|1|2|3|4-10>] [R<float>] [T<bool>] [V<|0|1|2|3|>]
+g33Command
+  = "G33" !integer ws? params:g33Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: 'G33',
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "G33",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start,
+          end: location().end,
+        },
+      };
+    }
+
+  g33Parameter
+    = p:"C" v:number ws?{ return makeParameter(p, v, location()); }
+    / p:"E" v:bool ws?{ return makeParameter(p, v, location()); }
+    / p:"F" v:integer ws?{ return makeParameter(p, v, location()); }
+    / p:"O" v:bool ws?{ return makeParameter(p, v, location()); }
+    / p:"P" v:("0"/ "1" / "2" / "3" / "4" / "5" / "6" / "7" / "8" / "9" / "10") ws?{ return makeParameter(p, v, location()); }
+    / p:"R" v:number ws?{ return makeParameter(p, v, location()); }
+    / p:"T" v:bool ws?{ return makeParameter(p, v, location()); }
+    / p:"V" v:("0"/ "1" / "2" / "3") ws?{ return makeParameter(p, v, location()); }
