@@ -78,17 +78,28 @@ number
       return parseFloat((sign || "") + intPart.join("") + (fracPart ? fracPart.join("") : ""));
     }
 
+//*******************Integer types******************//
 //Digit without decimal point.
 integer
   = sign:("-")? intPart:[0-9]+ ws {
       return parseInt((sign || "") + intPart.join(""));
     }
 
+//Types is described as integer in gcode documentation.
+index = integer
+
+temp = integer
+
+linear = integer
+
+
+
 //Specifically floating point number.
 float
   = sign:("-")? intPart:[0-9]+ fracPart:("." [0-9]+) ws{
       return parseFloat((sign || "") + intPart.join("") + (fracPart ? fracPart.join("") : ""));
     }
+
 
 
 //Direction is 0 or 1.
@@ -101,6 +112,9 @@ direction
 bool 
   = "0" / "1"
 
+//Takes no parameters
+flag
+= ""
 
 //Line that start with ; are considered as comments. Comment is allowed at the and of line as well.
 comment
@@ -115,7 +129,7 @@ comment
       };
     }
 
-
+//All commands with parameters
 command
   = c:(
     g0Command /
@@ -125,10 +139,43 @@ command
     g4Command /
     g5Command /
     g6Command /
-    g10Command
+    g10_11Command /
+    g12Command /
+    g26Command /
+    noParamGCommand
     ) ws? { return c; }
 
 //All gcodes that takes no parameters. So that only comment is allowed.
+noParamGCommand
+  = ("G17" !integer /
+    "G18" !integer /
+    "G19" !integer /
+    "G20" !integer /
+    "G21" !integer / 
+    "G31" !integer / 
+    "G32" !integer / 
+    "G53" !integer / 
+    "G54" !integer / 
+    "G55" !integer / 
+    "G56" !integer / 
+    "G57" !integer / 
+    "G58" !integer / 
+    "G59" !integer / 
+    "G59.1"  !integer / 
+    "G59.2"  !integer / 
+    "G59.3" !integer /
+    "G80"  !integer /
+    "G90"  !integer /
+    "G91" !integer ) ws? {
+      return {
+        command: text(),
+        parameters: [],
+        location: {
+          start: location().start,
+          end: location().end,
+        },
+      };
+    }
 
 //G0 and G1 commands are very similar.
 // I could have made one rule for both of them, but it is separate because G0 wans about using G1 for print / laser cut moves.
@@ -302,7 +349,7 @@ g2Parameter
 // I and J or R.
 //I J and R cannot be used together.
 g3Command
-  = "G3" ws? params:g3Parameter* {
+  = "G3" !integer ws? params:g3Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
       //If there are any duplicate parameters, push an error to the errors array.
@@ -385,7 +432,7 @@ g3Parameter
 //If both S and P are included, S takes precedence.
 //G4 with no arguments is effectively the same as M400.
 g4Command 
-  = "G4" ws params:g4Parameter* {
+  = "G4" !integer ws? params:g4Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
       //If there are any duplicate parameters, push an error to the errors array.
@@ -419,7 +466,7 @@ g4Parameter
 //G5 [E<pos>] [F<rate>] I<pos> J<pos> P<pos> Q<pos> [S<power>] X<pos> Y<pos>
 //P and Q are required 
 g5Command
-  = "G5" ws params:g5Parameter* {
+  = "G5" !integer ws? params:g5Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
       //If there are any duplicate parameters, push an error to the errors array.
@@ -453,7 +500,7 @@ g5Parameter
 
 //G6 [E<direction>] [I<index>] [R<rate>] [S<rate>] [X<direction>] [Y<direction>] [Z<direction>]
 g6Command 
-  = "G6" ws params:g6Parameter* {
+  = "G6" !integer ws? params:g6Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
       //If there are any duplicate parameters, push an error to the errors array.
@@ -492,9 +539,10 @@ g6Parameter
 
 
 //G10 [S<bool>]
+//G11 [S<bool>]
 //S parameter is optional.
-g10Command
-  = c:("G10" / "G11") ws params:g10Parameter* {
+g10_11Command
+  = c:("G10" / "G11") !integer ws? params:g10_11Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
       //If there are any duplicate parameters, push an error to the errors array.
@@ -520,7 +568,7 @@ g10Command
       };
     }
 
-g10Parameter
+g10_11Parameter
   = p:("S") v:bool {
       return makeParameter(p, v, location());
     }
@@ -528,7 +576,7 @@ g10Parameter
 
  //G12 [P<0|1|2>] [R<radius>] [S<count>] [T<count>] [X] [Y] [Z] 
 g12Command
-  = "G12" ws params:g12Parameter* {
+  = "G12" !integer ws? params:g12Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
       //If there are any duplicate parameters, push an error to the errors array.
@@ -555,7 +603,47 @@ g12Command
     }
 
 g12Parameter
-  = p:("P"("1"/ "2" / "3") / "R" / "S" / "T" / "X" / "Y" / "Z") v:number {
-      return makeParameter(p, v, location());
-    }
+  = p:"P" v:("1"/ "2" / "3") ws?{ return makeParameter(p, v, location()); }
+  / p:"R" v:number  ws?{ return makeParameter(p, v, location()); }
+  / p:"S" v:integer  ws?{ return makeParameter(p, v, location()); } 
+  / p:"T" v:integer  ws?{ return makeParameter(p, v, location()); }
+  / p:"X" v:flag  ws?{ return makeParameter(p, v, location()); }
+  / p:"Y" v:flag  ws?{ return makeParameter(p, v, location()); }
+  / p:"Z" v:flag  ws?{ return makeParameter(p, v, location()); }
 
+//G26 [B<temp>] [C<bool>] [D] [F<linear>] [H<linear>] [I<index>] [K<bool>] [L<linear>] [O<linear>] [P<linear>] [Q<float>] [R<int>] [S<float>] [U<linear>] [X<linear>] [Y<linear>]
+g26Command
+  = "G26" !integer ws? params:g26Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: 'G26',
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "G26",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start,
+          end: location().end,
+        },
+      };
+    }
+  
+g26Parameter
+  = p:"B" v:integer ws?{ return makeParameter(p, v, location()); }
+  / p:"C" v:bool ws?{ return makeParameter(p, v, location()); }
+  / p:"D" v:flag ws?{ return makeParameter(p, v, location()); }
+  / p:"F" v:integer ws?{ return makeParameter(p, v, location()); }
+  / p:"H" v:integer ws?{ return makeParameter(p, v, location()); }
+  / p:"I" v:integer ws?{ return makeParameter(p, v, location()); }
+  / p:"K" v:bool ws?{ return makeParameter(p, v, location()); }
