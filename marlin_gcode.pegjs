@@ -27,7 +27,7 @@
 }
 
 start
-  = lineNumber? ws? commands:(command / comment / emptyLine)* ws? nl? {
+  = lineNumber? ws? commands:(gCommand / comment / emptyLine)* ws? nl? {
       const errors = []; 
       commands = commands.filter(c => c.type !== 'emptyLine'); 
       commands.forEach(c => {
@@ -92,7 +92,11 @@ temp = integer
 
 linear = integer
 
+pos = number
 
+rate = number
+
+slot = integer
 
 //Specifically floating point number.
 float
@@ -130,7 +134,7 @@ comment
     }
 
 //All commands with parameters
-command
+gCommand
   = c:(
     g0Command /
     g1Command /
@@ -146,6 +150,15 @@ command
     g28Command /
     g30Command /
     g33Command /
+    g34Command /
+    g35Command /
+    g38_2to38_5Command /
+    g42Command /
+    g60Command /
+    g61Command /
+    g76Command /
+    g92Command /
+    g425Command /
     noParamGCommand
     ) ws? { return c; }
 
@@ -164,10 +177,10 @@ noParamGCommand
     "G56" !integer / 
     "G57" !integer / 
     "G58" !integer / 
-    "G59" !integer / 
     "G59.1"  !integer / 
     "G59.2"  !integer / 
     "G59.3" !integer /
+    "G59" /
     "G80"  !integer /
     "G90"  !integer /
     "G91" !integer ) ws? {
@@ -180,6 +193,8 @@ noParamGCommand
         },
       };
     }
+
+
 //G0-G1 - Linear Move
 //G0 and G1 commands are very similar.
 // I could have made one rule for both of them, but it is separate because G0 wans about using G1 for print / laser cut moves.
@@ -1045,6 +1060,12 @@ g33Command
 // Iterations - must be between 1 - 30
 // [T]	
 // Target accuracy - must be between 0.01 - 1.0
+//G34 [S<mA>] [Z<linear>]
+// Parameters
+// [S<mA>]	
+// Current value to use for the raise move. (Default: GANTRY_CALIBRATION_CURRENT)
+// [Z<linear>]	
+// Extra distance past Z_MAX_POS to move the Z axis. (Default: GANTRY_CALIBRATION_EXTRA_HEIGHT)
 g34Command
   = "G34" !integer ws? params:g34Parameter* {
       const errors = []; 
@@ -1061,6 +1082,7 @@ g34Command
           },
         });
       }
+      
       return {
         command: "G34",
         parameters: params,
@@ -1077,3 +1099,348 @@ g34Parameter
   / p:"E" v:flag ws?{ return makeParameter(p, v, location()); }
   / p:"I" v:flag ws?{ return makeParameter(p, v, location()); }
   / p:"T" v:flag ws?{ return makeParameter(p, v, location()); }
+  / p:"S" v:number ws?{ return makeParameter(p, v, location()); }
+  / p:"Z" v:number ws?{ return makeParameter(p, v, location()); }
+
+//G35 - Tramming Assistant
+//G35 [S<30|31|40|41|50|51>]
+// Parameters
+// [S<30|31|40|41|50|51>]	
+// Screw thread type
+
+// S30: M3 clockwise
+// S31: M3 counter-clockwise
+// S40: M4 clockwise
+// S41: M4 counter-clockwise
+// S50: M5 clockwise
+// S51: M5 counter-clockwise
+g35Command
+  = "G35" !integer ws? params:g35Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: 'G35',
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      
+      return {
+        command: "G35",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start,
+          end: location().end,
+        },
+      };
+    }
+
+g35Parameter
+  = p:"S" v:("30"/ "31" / "40" / "41" / "50" / "51") ws?{ return makeParameter(p, v, location()); }
+
+//G38.2-G38.5 - Probe target
+// G38.2 [F<rate>] [X<pos>] [Y<pos>] [Z<pos>]
+// G38.3 [F<rate>] [X<pos>] [Y<pos>] [Z<pos>]
+// G38.4 [F<rate>] [X<pos>] [Y<pos>] [Z<pos>]
+// G38.5 [F<rate>] [X<pos>] [Y<pos>] [Z<pos>]
+// Parameters
+// [F<rate>]	
+// Feedrate for the move
+// [X<pos>]	
+// Target X
+// [Y<pos>]	
+// Target Y
+// [Z<pos>]	
+// Target Z
+g38_2to38_5Command
+  = c:("G38.2" / "G38.3" / "G38.4" / "G38.5") !integer ws? params:g38_2to38_5Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (params.length === 0) {
+        errors.push({
+          type: 'missing_parameters',
+          command: c,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: c,
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start,
+          end: location().end,
+        },
+      };
+    }
+
+g38_2to38_5Parameter
+  = p:"F" v:rate ws?{ return makeParameter(p, v, location()); }
+  / p:"X" v:pos ws?{ return makeParameter(p, v, location()); }
+  / p:"Y" v:pos ws?{ return makeParameter(p, v, location()); }
+  / p:"Z" v:pos ws?{ return makeParameter(p, v, location()); }
+
+// G42 - Move to mesh coordinate
+// G42 [F<rate>] [I<pos>] [J<pos>]
+// Parameters
+// [F<rate>]	
+// The maximum movement rate of the move between the start and end point. The feedrate set here applies to subsequent moves that omit this parameter.
+// [I<pos>]	
+// The column of the mesh coordinate
+// [J<pos>]	
+// The row of the mesh coordinate
+g42Command
+  = "G42" !integer ws? params:g42Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+
+      if (params.length === 0) {
+        errors.push({
+          type: 'missing_parameters',
+          command: 'G42',
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "G42",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start,
+          end: location().end,
+        },
+      }; 
+    }
+
+g42Parameter
+  = p:"F" v:rate ws?{ return makeParameter(p, v, location()); } 
+  / p:"I" v:pos ws?{ return makeParameter(p, v, location()); } 
+  / p:"J" v:pos ws?{ return makeParameter(p, v, location()); }
+
+//G60 - Save Current Position
+//G60 [S<slot>]
+//Parameters
+// [S<slot>]	
+// Memory slot. If omitted, the first slot (0) is used.
+g60Command
+  = "G60" !integer ws? params:g60Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+
+      if (params.length === 0) {
+        errors.push({
+          type: 'missing_parameters',
+          command: 'G60',
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "G60",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start,
+          end: location().end,
+        }, 
+      }; 
+    }
+
+  g60Parameter
+    = p:"S" v:slot ws?{ return makeParameter(p, v, location()); } 
+
+//G61 - Return to Saved Position
+// G61 [E] [F<rate>] [S<slot>] [X] [Y] [Z]
+//Parameters
+// [E]	
+// Flag to restore the E axis
+// [F<rate>]	
+// Move feedrate
+// [S<slot>]	
+// Memory slot (0 if omitted)
+// [X]	
+// Flag to restore the X axis
+// [Y]	
+// Flag to restore the Y axis
+// [Z]	
+// Flag to restore the Z axis
+g61Command
+  = "G61" !integer ws? params:g61Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+
+      if (params.length === 0) {
+        errors.push({
+          type: 'missing_parameters',
+          command: 'G61',
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "G61",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start,
+          end: location().end, 
+        },
+      }; 
+    }
+
+  g61Parameter
+    = p:"E" v:flag ws?{ return makeParameter(p, v, location()); }
+    / p:"F" v:rate ws?{ return makeParameter(p, v, location()); }
+    / p:"S" v:slot ws?{ return makeParameter(p, v, location()); }
+    / p:"X" v:flag ws?{ return makeParameter(p, v, location()); }
+    / p:"Y" v:flag ws?{ return makeParameter(p, v, location()); }
+    / p:"Z" v:flag ws?{ return makeParameter(p, v, location()); }
+
+
+// G76 - Probe temperature calibration
+//G76 [B] [P]
+// Parameters
+// [B]	
+// Calibrate bed only
+// [P]
+g76Command 
+  = "G76" !integer ws? params:g76Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+
+      if (params.length === 0) {
+        errors.push({
+          type: 'missing_parameters',
+          command: 'G76',
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "G76",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end,
+        },
+      }; 
+    }
+
+  g76Parameter
+    = p:"B" v:flag ws?{ return makeParameter(p, v, location()); }
+    / p:"P" v:flag ws?{ return makeParameter(p, v, location()); }
+
+
+//G92 - Set Position
+//G92 [E<pos>] [X<pos>] [Y<pos>] [Z<pos>]
+// Parameters
+// [E<pos>]	
+// New extruder position
+// [X<pos>]	
+// New X axis position
+// [Y<pos>]	
+// New Y axis position
+// [Z<pos>]	
+// New Z axis position
+g92Command
+  = "G92" !integer ws? params:g92Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+
+      if (params.length === 0) {
+        errors.push({
+          type: 'missing_parameters',
+          command: 'G92',
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "G92",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start,
+          end: location().end, 
+        },
+      }; 
+    }
+
+  g92Parameter
+    = p:"E" v:pos ws?{ return makeParameter(p, v, location()); }
+    / p:"X" v:pos ws?{ return makeParameter(p, v, location()); }
+    / p:"Y" v:pos ws?{ return makeParameter(p, v, location()); }
+    / p:"Z" v:pos ws?{ return makeParameter(p, v, location()); }
+
+
+//G425 - Backlash Calibration
+//G425 [B] [T<index>] [U<linear>] [V]
+// Parameters
+// [B]	
+// Perform calibration of backlash only.
+// [T<index>]	
+// Perform calibration of one toolhead only.
+// [U<linear>]	
+// Uncertainty: how far to start probe away from the cube (mm)
+// [V]	
+// Probe cube and print position, error, backlash and hotend offset. (Requires CALIBRATION_REPORTING)
+g425Command
+  = "G425" !integer ws? params:g425Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+
+      if (params.length === 0) {
+        errors.push({
+          type: 'missing_parameters',
+          command: 'G425',
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "G425",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start,
+          end: location().end, 
+        },
+      }; 
+    }
+
+  g425Parameter
+    = p:"B" v:flag ws?{ return makeParameter(p, v, location()); }
+    / p:"T" v:integer ws?{ return makeParameter(p, v, location()); }
+    / p:"U" v:number ws?{ return makeParameter(p, v, location()); }
+    / p:"V" v:flag ws?{ return makeParameter(p, v, location()); }
