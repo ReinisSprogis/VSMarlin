@@ -24,29 +24,7 @@
     });
     return duplicates;
   }
-
-  function createCommand(c, params, duplicates, errors, location) {
-  if (duplicates.length > 0) {
-    errors.push({
-      type: 'duplicate_parameters',
-      command: c,
-      duplicates: duplicates,
-      location: {
-        start: location.start,
-        end: location.end,
-      },
-    });
-  }
-  return {
-    command: c,
-    parameters: params,
-    errors: errors.length > 0 ? errors : null,
-    location: {
-      start: location.start,
-      end: location.end,
-    },
-  };
-}
+  
 }
 
 start
@@ -157,6 +135,9 @@ pin 'Pin'
 state 'State'
   = integer
 
+legs 'Legs: int'
+  = positiveInteger
+
 //Specifically floating point number.
 float 'Float'
   = sign:("-")? intPart:[0-9]+ fracPart:("." [0-9]+) ws{
@@ -183,6 +164,8 @@ direction '0 or 1'
 bool '0 = false or 1 = true'
   = "0" / "1"
 
+engage '0 = false or 1 = true'
+  =  bool
 //Takes no parameters
 flag 'Flag - No parameters'
   = ""
@@ -284,6 +267,7 @@ mCommand
     m34Command /
     m42Command /
     m43Command /
+    m48Command /
     noParamMCommands 
     ) ws? { return c; } 
 
@@ -2042,10 +2026,30 @@ m26Command
 // [S<seconds>]	
 // Interval between auto-reports. S0 to disable (requires AUTO_REPORT_SD_STATUS)
 m27Command 
-  = c:"M27" !integer ws? params:m27Parameter* {
-  const errors = [];
+  = "M27" !integer ws? params:m27Parameter* {
+   const errors = []; 
       const duplicates = findDuplicateParameters(params);
-      return createCommand(c, params, duplicates, errors, location());
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: 'M27',
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "M27",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end,
+        },
+      }; 
     }
 
   m27Parameter
@@ -2160,10 +2164,30 @@ m33Command
 // [S<bool>]	
 // Sorting on/off
 m34Command 
-  = c:"M34" !integer ws? params:m34Parameter* {
-      const errors = [];
+  = "M34" !integer ws? params:m34Parameter* {
+      const errors = []; 
       const duplicates = findDuplicateParameters(params);
-      return createCommand(c, params, duplicates, errors, location());
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: 'M34',
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "M34",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end, 
+        },
+      }; 
     }
 
   m34Parameter
@@ -2187,9 +2211,29 @@ m34Command
 // T3: INPUT_PULLDOWN
 m42Command 
   = c:"M42" !integer ws? params:m42Parameter* {
-      const errors = [];
+      const errors = []; 
       const duplicates = findDuplicateParameters(params);
-      return createCommand(c, params, duplicates, errors, location());
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: c,
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: c,
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end, 
+        },
+      }; 
     }
 
   m42Parameter
@@ -2295,4 +2339,59 @@ m43tCommand
     / p:"S" v:pin ws?{ return makeParameter(p, v, location()); }
     / p:"W" v:integer ws?{ return makeParameter(p, v, location()); }
 
-  
+  //M48 - Probe Repeatability Test
+//   M48 [C<bool>] [E<engage>] [L<legs>] [P<count>] [S<0|1>] [V<level>] [X<pos>] [Y<pos>]
+// Parameters
+// [C<bool>]	
+// Probe with temperature compensation enabled (PTC_PROBE, PTC_BED, PTC_HOTEND)
+// [E<engage>]	
+// Engage for each probe
+// [L<legs>]	
+// Number of legs to probe
+// [P<count>]	
+// Number of probes to do
+// [S<0|1>]	
+// Star/Schizoid probe. By default this will do 7 points. Override with L.
+// S0: Circular pattern
+// S1: Star-like pattern
+// [V<level>]	
+// Verbose Level (0-4, default=1)
+// [X<pos>]	
+// X Position
+// [Y<pos>]	
+// Y Position
+m48Command 
+  = "M48" !integer ws? params:m48Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      if(duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: 'M48',
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "M48",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start,
+          end: location().end, 
+        },
+      };
+    }
+
+  m48Parameter
+    = p:"C" v:bool ws?{ return makeParameter(p, v, location()); }
+    / p:"E" v:engage ws?{ return makeParameter(p, v, location()); }
+    / p:"L" v:legs ws?{ return makeParameter(p, v, location()); }
+    / p:"P" v:integer ws?{ return makeParameter(p, v, location()); }
+    / p:"S" v:("0" / "1") ws?{ return makeParameter(p, v, location()); }
+    / p:"V" v:integer ws?{ return makeParameter(p, v, location()); }
+    / p:"X" v:pos ws?{ return makeParameter(p, v, location()); }
+    / p:"Y" v:pos ws?{ return makeParameter(p, v, location()); }
