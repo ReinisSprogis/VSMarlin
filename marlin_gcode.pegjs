@@ -27,7 +27,7 @@
 }
 
 start
-  = lineNumber? ws? commands:(gCommand / comment / emptyLine)* ws? nl? {
+  = lineNumber? ws? commands:(gCommand / mCommand / comment / emptyLine)*  ws?  nl? {
       const errors = []; 
       commands = commands.filter(c => c.type !== 'emptyLine'); 
       commands.forEach(c => {
@@ -47,9 +47,9 @@ start
 
 
 
+string 'String' = [a-zA-Z0-9_ ]*
 
-
-emptyLine
+emptyLine "Empty Line"
   = ws nl {
       return {
         type: "emptyLine",
@@ -60,69 +60,98 @@ emptyLine
       };
     }
 
-ws "whitespace" = [ \t]*
+ws "whitespace" 
+  = [ \t]* / " "*
 
-nl "newline"
-  = [\n] / [\r][\n]?
+nl "Newl line"
+  = [\r] / [\n] / [\r][\n]? 
+
+//*******************Numbers******************//
 
 //Not sure if this is needed.
 //But added just in case some might have line numbers in their gcode.
-lineNumber
+lineNumber "Line Number"
   = "N" n:[0-9]+ ws {
       return parseInt(n.join(""));
     } 
 
 //Eather integer or float.
-number
+number 'Decimal or Integer'
   = sign:("-")? intPart:[0-9]+ fracPart:("." [0-9]+)? ws{
       return parseFloat((sign || "") + intPart.join("") + (fracPart ? fracPart.join("") : ""));
     }
 
-//*******************Integer types******************//
+
 //Digit without decimal point.
-integer
+integer 'Integer'
   = sign:("-")? intPart:[0-9]+ ws {
       return parseInt((sign || "") + intPart.join(""));
     }
 
+//Only positive integer
+positiveInteger 'Positive Integer'
+  = intPart:[0-9]+ ws {
+      return parseInt(intPart.join(""));
+    } 
+
 //Types is described as integer in gcode documentation.
-index = integer
+index 'Positive'
+  = positiveInteger
 
-temp = integer
+temp 'Temperature'
+  = integer
 
-linear = integer
+linear 'Integer'
+  = integer
 
-pos = number
+pos 'Integer' 
+  = number
 
-rate = number
+rate 'Integer' 
+  = number
 
-slot = integer
+slot 'Slot'
+  = positiveInteger
+
+
+ms 'Millisecond'
+  = positiveInteger
+
+sec 'Second'
+  = positiveInteger
 
 //Specifically floating point number.
-float
+float 'Float'
   = sign:("-")? intPart:[0-9]+ fracPart:("." [0-9]+) ws{
       return parseFloat((sign || "") + intPart.join("") + (fracPart ? fracPart.join("") : ""));
     }
 
 
+power "0 - 255"
+  = value:integer* &{ return parseInt(value, 10) >= 0 && parseInt(value, 10) <= 255; } {
+      return parseInt(value, 10);
+    }
+
+  
+
 
 //Direction is 0 or 1.
 //0 is clockwise.
 //1 is counterclockwise.
-direction 
+direction '0 or 1'
   = "0" / "1"
 
 //Boolean is 0 false or 1 true.
-bool 
+bool '0 = false or 1 = true'
   = "0" / "1"
 
 //Takes no parameters
-flag
-= ""
+flag 'Flag - No parameters'
+  = ""
 
 //Line that start with ; are considered as comments. Comment is allowed at the and of line as well.
-comment
-  = ";" commentText:[^\n]* ws "\n" {
+comment '; comment' 
+  = ws? ";" commentText:[^\n]* {
       return {
         type: "comment",
         text: commentText.join(""),
@@ -133,8 +162,8 @@ comment
       };
     }
 
-//All commands with parameters
-gCommand
+//All g commands with parameters
+gCommand 
   = c:(
     g0Command /
     g1Command /
@@ -160,30 +189,31 @@ gCommand
     g92Command /
     g425Command /
     noParamGCommand
-    ) ws? { return c; }
+    ) { return c; }
 
 //All gcodes that takes no parameters. So that only comment is allowed.
-noParamGCommand
-  = ("G17" !integer /
-    "G18" !integer /
-    "G19" !integer /
-    "G20" !integer /
-    "G21" !integer / 
-    "G31" !integer / 
-    "G32" !integer / 
-    "G53" !integer / 
-    "G54" !integer / 
-    "G55" !integer / 
-    "G56" !integer / 
-    "G57" !integer / 
-    "G58" !integer / 
-    "G59.1"  !integer / 
-    "G59.2"  !integer / 
-    "G59.3" !integer /
+noParamGCommand 'G'
+  = (
+    "G17" /
+    "G18" /
+    "G19" /
+    "G20" /
+    "G21" / 
+    "G31" / 
+    "G32" / 
+    "G53" / 
+    "G54" / 
+    "G55" / 
+    "G56" / 
+    "G57" / 
+    "G58" / 
+    "G59.1" / 
+    "G59.2" / 
+    "G59.3" /
     "G59" /
-    "G80"  !integer /
-    "G90"  !integer /
-    "G91" !integer ) ws? {
+    "G80" /
+    "G90" /
+    "G91" )!integer ws? {
       return {
         command: text(),
         parameters: [],
@@ -194,6 +224,77 @@ noParamGCommand
       };
     }
 
+//all M commands with parameters
+mCommand 'M'
+  = c:(
+    m0toM1Command / 
+    m3Command /
+    noParamMCommands 
+    ) ws? { return c; } 
+
+//All mcodes that takes no parameters. So that only comment is allowed.
+noParamMCommands 'M'
+  = (
+    "M5" /
+    "M7" /
+    "M8" /
+    "M9" /
+    "M10" /
+    "M11" /
+    "M21" /
+    "M22" /
+    "M25" /
+    "M29" /
+    "M31" /
+    "M76" /
+    "M77" /
+    "M78" /
+    "M81" /
+    "M82" /
+    "M83" /
+    "M108" /
+    "M112" /
+    "M115" /
+    "M119" /
+    "M120" /
+    "M121" /
+    "M123" /
+    "M127" /
+    "M129" /
+    "M360" /
+    "M361" /
+    "M362" /
+    "M363" /
+    "M364" /
+    "M400" /
+    "M402" /
+    "M406" /
+    "M407" /
+    "M410" /
+    "M428" /
+    "M500" /
+    "M501" /
+    "M502" /
+    "M504" /
+    "M510" /
+    "M524" /
+    "M909" /
+    "M910" /
+    "M911" /
+    "M993" /
+    "M994" /
+    "M995" /
+    "M997" 
+    ) !integer ws? {
+      return {
+        command: text(),
+        parameters: [],
+        location: {
+          start: location().start,
+          end: location().end,
+        },
+      };
+    }
 
 //G0-G1 - Linear Move
 //G0 and G1 commands are very similar.
@@ -211,7 +312,7 @@ noParamGCommand
 // [Y<pos>]	
 // An absolute or relative coordinate on the Y axis (in current units).
 // [Z<pos>]
-g0Command
+g0Command 
   = "G0" !integer ws? params:g0Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -253,7 +354,7 @@ g0Command
       };
     }
 
-g0Parameter
+g0Parameter 'X Y Z E F S'
   = p:("X" / "Y" / "Z" / "E" / "F" / "S") v:number {
       return makeParameter(p, v, location());
     }
@@ -273,7 +374,7 @@ g0Parameter
 // [Y<pos>]	
 // An absolute or relative coordinate on the Y axis (in current units).
 // [Z<pos>]
-g1Command
+g1Command 'G'
   = "G1" !integer ws? params:g1Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -331,7 +432,7 @@ g1Parameter
 // A coordinate on the Y axis
 // [Z<pos>]	
 // A coordinate on the Z axis
-g2Command
+g2Command 'G'
   = "G2" !integer ws params:g2Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -435,7 +536,7 @@ g2Parameter
 // A coordinate on the Y axis
 // [Z<pos>]	
 // A coordinate on the Z axis
-g3Command
+g3Command 'G'
   = "G3" !integer ws? params:g3Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -514,6 +615,7 @@ g3Parameter
   = p:("X" / "Y" / "Z" / "E" / "F" / "S" / "I" / "J" / "R" / "P") v:number {
       return makeParameter(p, v, location());
     }
+
 //G4 - Dwell
 //G4 [P<time (ms)>] [S<time (sec)>]
 //If both S and P are included, S takes precedence.
@@ -522,7 +624,7 @@ g3Parameter
 // [P<time(ms)>]	
 // Amount of time to dwell
 // [S<time(sec)>]
-g4Command 
+g4Command 'G'
   = "G4" !integer ws? params:g4Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -550,9 +652,8 @@ g4Command
     }
 
 g4Parameter
-  = p:("P" / "S") v:integer {
-      return makeParameter(p, v, location());
-    }
+  = p:"P" v:ms ws?{ return makeParameter(p, v, location()); }
+  / p:"S" v:sec ws?{ return makeParameter(p, v, location()); }
 
 // G5 - Bézier cubic spline
 //G5 [E<pos>] [F<rate>] I<pos> J<pos> P<pos> Q<pos> [S<power>] X<pos> Y<pos>
@@ -575,7 +676,7 @@ g4Parameter
 // A destination coordinate on the X axis
 // Y<pos>	
 // A destination coordinate on the Y axis
-g5Command
+g5Command 'G'
   = "G5" !integer ws? params:g5Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -603,7 +704,7 @@ g5Command
       };
     }
 
-g5Parameter
+g5Parameter 
   = p:("X" / "Y" / "E" / "F" / "S" / "I" / "J" / "P" / "Q") v:number {
       return makeParameter(p, v, location());
     }
@@ -625,7 +726,7 @@ g5Parameter
 // 1 for positive, 0 for negative. Last value is cached for future invocations. Not used for directional formats.
 // [Z<direction>]	
 // 1 for positive, 0 for negative. Last value is cached for future invocations. Not used for directional formats.
-g6Command 
+g6Command 'G'
   = "G6" !integer ws? params:g6Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -668,7 +769,7 @@ g6Parameter
 //Parameters
 // [S<bool>]	
 // Use G10 S1 to do a swap retraction, before changing extruders. The subsequent G11 (after tool change) will do a swap recover. (Requires EXTRUDERS > 1)
- g10_11Command
+ g10_11Command 'G'
   = c:("G10" / "G11") !integer ws? params:g10_11Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -720,7 +821,7 @@ g10_11Parameter
 // Include Y motion when cleaning with limited axes. (Leave out X, Y, and Z for non-limited cleaning.)
 // [Z]	
 // Include Z motion when cleaning with limited axes. (Leave out X, Y, and Z for non-limited cleaning.) 
-g12Command
+g12Command 'G'
   = "G12" !integer ws? params:g12Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -792,7 +893,7 @@ g12Parameter
 // X position (otherwise, current X position)
 // [Y<linear>]	
 // Y position (otherwise, current Y position)
-g26Command
+g26Command 'G'
   = "G26" !integer ws? params:g26Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -836,7 +937,7 @@ g26Parameter
 // P0: If current Z-pos is lower than Z-park then the nozzle will be raised to reach Z-park height
 // P1: No matter the current Z-pos, the nozzle will be raised/lowered to reach Z-park height
 // P2: The nozzle height will be raised by Z-park amount but never going over the machine’s limit of Z_MAX_POS
-  g27Command
+  g27Command 'G'
     = "G27" !integer ws? params:g27Parameter* {
         const errors = []; 
         const duplicates = findDuplicateParameters(params);
@@ -886,7 +987,7 @@ g26Parameter
 
 // [Z]	
 // Flag to home the Z axis
-g28Command
+g28Command 'G'
   = "G28" !integer ws? params:g28Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -942,7 +1043,7 @@ g28Parameter
 
 // [Y<pos>]	
 // Y probe position
-  g30Command
+  g30Command 'G'
     = "G30" !integer ws? params:g30Parameter* {
         const errors = []; 
         const duplicates = findDuplicateParameters(params);
@@ -1012,7 +1113,7 @@ g28Parameter
 // V1: Report settings
 // V2: Report settings and probe results
 // V3: Report settings, probe results, and calibration results
-g33Command
+g33Command 'G'
   = "G33" !integer ws? params:g33Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -1066,7 +1167,7 @@ g33Command
 // Current value to use for the raise move. (Default: GANTRY_CALIBRATION_CURRENT)
 // [Z<linear>]	
 // Extra distance past Z_MAX_POS to move the Z axis. (Default: GANTRY_CALIBRATION_EXTRA_HEIGHT)
-g34Command
+g34Command 'G'
   = "G34" !integer ws? params:g34Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -1114,7 +1215,7 @@ g34Parameter
 // S41: M4 counter-clockwise
 // S50: M5 clockwise
 // S51: M5 counter-clockwise
-g35Command
+g35Command 'G'
   = "G35" !integer ws? params:g35Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -1159,7 +1260,7 @@ g35Parameter
 // Target Y
 // [Z<pos>]	
 // Target Z
-g38_2to38_5Command
+g38_2to38_5Command 'G'
   = c:("G38.2" / "G38.3" / "G38.4" / "G38.5") !integer ws? params:g38_2to38_5Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -1200,7 +1301,7 @@ g38_2to38_5Parameter
 // The column of the mesh coordinate
 // [J<pos>]	
 // The row of the mesh coordinate
-g42Command
+g42Command 'G'
   = "G42" !integer ws? params:g42Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -1237,7 +1338,7 @@ g42Parameter
 //Parameters
 // [S<slot>]	
 // Memory slot. If omitted, the first slot (0) is used.
-g60Command
+g60Command 'G'
   = "G60" !integer ws? params:g60Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -1282,7 +1383,7 @@ g60Command
 // Flag to restore the Y axis
 // [Z]	
 // Flag to restore the Z axis
-g61Command
+g61Command 'G'
   = "G61" !integer ws? params:g61Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -1324,7 +1425,7 @@ g61Command
 // [B]	
 // Calibrate bed only
 // [P]
-g76Command 
+g76Command 'G'
   = "G76" !integer ws? params:g76Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -1367,7 +1468,7 @@ g76Command
 // New Y axis position
 // [Z<pos>]	
 // New Z axis position
-g92Command
+g92Command 'G'
   = "G92" !integer ws? params:g92Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -1412,7 +1513,7 @@ g92Command
 // Uncertainty: how far to start probe away from the cube (mm)
 // [V]	
 // Probe cube and print position, error, backlash and hotend offset. (Requires CALIBRATION_REPORTING)
-g425Command
+g425Command 'G'
   = "G425" !integer ws? params:g425Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -1444,3 +1545,130 @@ g425Command
     / p:"T" v:integer ws?{ return makeParameter(p, v, location()); }
     / p:"U" v:number ws?{ return makeParameter(p, v, location()); }
     / p:"V" v:flag ws?{ return makeParameter(p, v, location()); }
+
+
+    //************M Codes************//
+
+// M0 - M1 - Unconditional stop
+//M0 [P<ms>] [S<sec>] [string]
+// M1 [P<ms>] [S<sec>] [string]
+// Parameters
+// [P<ms>]	
+// Expire time, in milliseconds
+// [S<sec>]	
+// Expire time, in seconds
+// [string]	
+// An optional message to display on the LCD
+m0toM1Command 'M'
+  = c:("M0" / "M1") !integer ws? params:m0toM1Parameter* string?{
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+
+      if (params.length === 0) {
+        errors.push({
+          type: 'missing_parameters',
+          command: c,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: c,
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end,
+        },
+      }; 
+    }
+
+  m0toM1Parameter
+    = p:"P" v:ms ws?{ return makeParameter(p, v, location()); }
+    / p:"S" v:sec ws?{ return makeParameter(p, v, location()); }
+    
+
+//M3 - Spindle CW / Laser On
+//   M3 [I<mode>] [O<power>] [S<power>]
+// Parameters
+// [I<mode>]	
+// Inline mode ON / OFF.
+// [O<power>]	
+// Spindle speed or laser power in PWM 0-255 value range
+// [S<power>]	
+// Spindle speed or laser power in the configured value range (see CUTTER_POWER_DISPLAY). (PWM 0-255 by default)
+m3Command 'M'
+    = "M3" !integer ws? params:m3Parameter* {
+        const errors = []; 
+        const duplicates = findDuplicateParameters(params);
+        //If there are any duplicate parameters, push an error to the errors array.
+        if (params.length === 0) {
+          errors.push({
+            type: 'missing_parameters',
+            command: 'M3',
+            location: {
+              start: location().start,
+              end: location().end,
+            },
+          });
+        }
+        return {
+          command: "M3",
+          parameters: params,
+          errors: errors.length > 0 ? errors : null, 
+          location: {
+            start: location().start,
+            end: location().end, 
+          },
+        }; 
+      }
+
+  m3Parameter
+    = p:"I" v:bool ws?{ return makeParameter(p, v, location()); }
+    / p:"O" v:power ws?{ return makeParameter(p, v, location()); }
+    / p:"S" v:power ws?{ return makeParameter(p, v, location()); }
+
+//M4 - Spindle CCW / Laser On
+//   M4 [I<mode>] [O<power>] [S<power>]
+// Parameters
+// [I<mode>]
+// Inline mode ON / OFF.
+// [O<power>]
+// Spindle speed or laser power in PWM 0-255 value range
+// [S<power>]
+// Spindle speed or laser power in the configured value range (see CUTTER_POWER_UNIT). (PWM 0-255 by default)
+m4Command 'M'
+  = "M4" !integer ws? params:m4Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+
+      if (params.length === 0) {
+        errors.push({
+          type: 'missing_parameters',
+          command: 'M4',
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "M4",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end,
+        },
+      }; 
+    }
+
+  m4Parameter
+    = p:"I" v:bool ws?{ return makeParameter(p, v, location()); }
+    / p:"O" v:power ws?{ return makeParameter(p, v, location()); }
+    / p:"S" v:power ws?{ return makeParameter(p, v, location()); }
+
