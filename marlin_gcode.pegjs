@@ -47,7 +47,8 @@ start
 
 
 
-string 'String' = [a-zA-Z0-9_ ]*
+string 'String' 
+  = [a-zA-Z0-9_ ]*
 
 emptyLine "Empty Line"
   = ws nl {
@@ -120,6 +121,19 @@ ms 'Millisecond'
 sec 'Second'
   = positiveInteger
 
+//Two different namings for the same thing. (in Marlin)
+seconds 'Second'
+  = sec
+
+time 'Time'
+  = positiveInteger
+
+pin 'Pin'
+  = positiveInteger
+
+state 'State'
+  = integer
+
 //Specifically floating point number.
 float 'Float'
   = sign:("-")? intPart:[0-9]+ fracPart:("." [0-9]+) ws{
@@ -133,7 +147,8 @@ power "0 - 255"
     }
 
   
-
+filepos "File Position"
+  = integer
 
 //Direction is 0 or 1.
 //0 is clockwise.
@@ -192,7 +207,7 @@ gCommand
     ) { return c; }
 
 //All gcodes that takes no parameters. So that only comment is allowed.
-noParamGCommand 'G'
+noParamGCommand 
   = (
     "G17" /
     "G18" /
@@ -225,15 +240,32 @@ noParamGCommand 'G'
     }
 
 //all M commands with parameters
-mCommand 'M'
+mCommand 
   = c:(
     m0toM1Command / 
+    m2Command /
     m3Command /
+    m4Command /
+    m16Command /
+    m17Command /
+    m18andM84Command /
+    m20Command /
+    m23Command /
+    m24Command /
+    m26Command /
+    m27Command /
+    m28Command /
+    m30Command /
+    m32Command /
+    m33Command /
+    m34Command /
+    m42Command /
+    m43Command /
     noParamMCommands 
     ) ws? { return c; } 
 
 //All mcodes that takes no parameters. So that only comment is allowed.
-noParamMCommands 'M'
+noParamMCommands 
   = (
     "M5" /
     "M7" /
@@ -354,7 +386,7 @@ g0Command
       };
     }
 
-g0Parameter 'X Y Z E F S'
+g0Parameter 
   = p:("X" / "Y" / "Z" / "E" / "F" / "S") v:number {
       return makeParameter(p, v, location());
     }
@@ -374,7 +406,7 @@ g0Parameter 'X Y Z E F S'
 // [Y<pos>]	
 // An absolute or relative coordinate on the Y axis (in current units).
 // [Z<pos>]
-g1Command 'G'
+g1Command 
   = "G1" !integer ws? params:g1Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -432,7 +464,7 @@ g1Parameter
 // A coordinate on the Y axis
 // [Z<pos>]	
 // A coordinate on the Z axis
-g2Command 'G'
+g2Command 
   = "G2" !integer ws params:g2Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -536,7 +568,7 @@ g2Parameter
 // A coordinate on the Y axis
 // [Z<pos>]	
 // A coordinate on the Z axis
-g3Command 'G'
+g3Command 
   = "G3" !integer ws? params:g3Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -624,7 +656,7 @@ g3Parameter
 // [P<time(ms)>]	
 // Amount of time to dwell
 // [S<time(sec)>]
-g4Command 'G'
+g4Command 
   = "G4" !integer ws? params:g4Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -676,7 +708,7 @@ g4Parameter
 // A destination coordinate on the X axis
 // Y<pos>	
 // A destination coordinate on the Y axis
-g5Command 'G'
+g5Command 
   = "G5" !integer ws? params:g5Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -726,7 +758,7 @@ g5Parameter
 // 1 for positive, 0 for negative. Last value is cached for future invocations. Not used for directional formats.
 // [Z<direction>]	
 // 1 for positive, 0 for negative. Last value is cached for future invocations. Not used for directional formats.
-g6Command 'G'
+g6Command 
   = "G6" !integer ws? params:g6Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -769,7 +801,7 @@ g6Parameter
 //Parameters
 // [S<bool>]	
 // Use G10 S1 to do a swap retraction, before changing extruders. The subsequent G11 (after tool change) will do a swap recover. (Requires EXTRUDERS > 1)
- g10_11Command 'G'
+ g10_11Command 
   = c:("G10" / "G11") !integer ws? params:g10_11Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -821,7 +853,7 @@ g10_11Parameter
 // Include Y motion when cleaning with limited axes. (Leave out X, Y, and Z for non-limited cleaning.)
 // [Z]	
 // Include Z motion when cleaning with limited axes. (Leave out X, Y, and Z for non-limited cleaning.) 
-g12Command 'G'
+g12Command 
   = "G12" !integer ws? params:g12Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -893,7 +925,7 @@ g12Parameter
 // X position (otherwise, current X position)
 // [Y<linear>]	
 // Y position (otherwise, current Y position)
-g26Command 'G'
+g26Command 
   = "G26" !integer ws? params:g26Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -937,7 +969,7 @@ g26Parameter
 // P0: If current Z-pos is lower than Z-park then the nozzle will be raised to reach Z-park height
 // P1: No matter the current Z-pos, the nozzle will be raised/lowered to reach Z-park height
 // P2: The nozzle height will be raised by Z-park amount but never going over the machine’s limit of Z_MAX_POS
-  g27Command 'G'
+  g27Command 
     = "G27" !integer ws? params:g27Parameter* {
         const errors = []; 
         const duplicates = findDuplicateParameters(params);
@@ -987,7 +1019,7 @@ g26Parameter
 
 // [Z]	
 // Flag to home the Z axis
-g28Command 'G'
+g28Command 
   = "G28" !integer ws? params:g28Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -1043,7 +1075,7 @@ g28Parameter
 
 // [Y<pos>]	
 // Y probe position
-  g30Command 'G'
+  g30Command 
     = "G30" !integer ws? params:g30Parameter* {
         const errors = []; 
         const duplicates = findDuplicateParameters(params);
@@ -1113,7 +1145,7 @@ g28Parameter
 // V1: Report settings
 // V2: Report settings and probe results
 // V3: Report settings, probe results, and calibration results
-g33Command 'G'
+g33Command 
   = "G33" !integer ws? params:g33Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -1167,7 +1199,7 @@ g33Command 'G'
 // Current value to use for the raise move. (Default: GANTRY_CALIBRATION_CURRENT)
 // [Z<linear>]	
 // Extra distance past Z_MAX_POS to move the Z axis. (Default: GANTRY_CALIBRATION_EXTRA_HEIGHT)
-g34Command 'G'
+g34Command 
   = "G34" !integer ws? params:g34Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -1215,7 +1247,7 @@ g34Parameter
 // S41: M4 counter-clockwise
 // S50: M5 clockwise
 // S51: M5 counter-clockwise
-g35Command 'G'
+g35Command 
   = "G35" !integer ws? params:g35Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
@@ -1260,15 +1292,16 @@ g35Parameter
 // Target Y
 // [Z<pos>]	
 // Target Z
-g38_2to38_5Command 'G'
+g38_2to38_5Command 
   = c:("G38.2" / "G38.3" / "G38.4" / "G38.5") !integer ws? params:g38_2to38_5Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
       //If there are any duplicate parameters, push an error to the errors array.
-      if (params.length === 0) {
+      if (duplicates.length > 0) {
         errors.push({
-          type: 'missing_parameters',
+          type: 'duplicate_parameters',
           command: c,
+          duplicates: duplicates,
           location: {
             start: location().start,
             end: location().end,
@@ -1301,16 +1334,16 @@ g38_2to38_5Parameter
 // The column of the mesh coordinate
 // [J<pos>]	
 // The row of the mesh coordinate
-g42Command 'G'
+g42Command 
   = "G42" !integer ws? params:g42Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
       //If there are any duplicate parameters, push an error to the errors array.
-
-      if (params.length === 0) {
+      if (duplicates.length > 0) {
         errors.push({
-          type: 'missing_parameters',
+          type: 'duplicate_parameters',
           command: 'G42',
+          duplicates: duplicates,
           location: {
             start: location().start,
             end: location().end,
@@ -1338,16 +1371,16 @@ g42Parameter
 //Parameters
 // [S<slot>]	
 // Memory slot. If omitted, the first slot (0) is used.
-g60Command 'G'
+g60Command 
   = "G60" !integer ws? params:g60Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
       //If there are any duplicate parameters, push an error to the errors array.
-
-      if (params.length === 0) {
+      if (duplicates.length > 0) {
         errors.push({
-          type: 'missing_parameters',
+          type: 'duplicate_parameters',
           command: 'G60',
+          duplicates: duplicates,
           location: {
             start: location().start,
             end: location().end,
@@ -1383,16 +1416,16 @@ g60Command 'G'
 // Flag to restore the Y axis
 // [Z]	
 // Flag to restore the Z axis
-g61Command 'G'
+g61Command 
   = "G61" !integer ws? params:g61Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
       //If there are any duplicate parameters, push an error to the errors array.
-
-      if (params.length === 0) {
+      if (duplicates.length > 0) {
         errors.push({
-          type: 'missing_parameters',
+          type: 'duplicate_parameters',
           command: 'G61',
+          duplicates: duplicates,
           location: {
             start: location().start,
             end: location().end,
@@ -1425,16 +1458,16 @@ g61Command 'G'
 // [B]	
 // Calibrate bed only
 // [P]
-g76Command 'G'
+g76Command 
   = "G76" !integer ws? params:g76Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
       //If there are any duplicate parameters, push an error to the errors array.
-
-      if (params.length === 0) {
+      if (duplicates.length > 0) {
         errors.push({
-          type: 'missing_parameters',
+          type: 'duplicate_parameters',
           command: 'G76',
+          duplicates: duplicates,
           location: {
             start: location().start,
             end: location().end,
@@ -1468,16 +1501,16 @@ g76Command 'G'
 // New Y axis position
 // [Z<pos>]	
 // New Z axis position
-g92Command 'G'
+g92Command 
   = "G92" !integer ws? params:g92Parameter* {
-      const errors = []; 
+     const errors = []; 
       const duplicates = findDuplicateParameters(params);
       //If there are any duplicate parameters, push an error to the errors array.
-
-      if (params.length === 0) {
+      if (duplicates.length > 0) {
         errors.push({
-          type: 'missing_parameters',
+          type: 'duplicate_parameters',
           command: 'G92',
+          duplicates: duplicates,
           location: {
             start: location().start,
             end: location().end,
@@ -1513,16 +1546,16 @@ g92Command 'G'
 // Uncertainty: how far to start probe away from the cube (mm)
 // [V]	
 // Probe cube and print position, error, backlash and hotend offset. (Requires CALIBRATION_REPORTING)
-g425Command 'G'
+g425Command 
   = "G425" !integer ws? params:g425Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
       //If there are any duplicate parameters, push an error to the errors array.
-
-      if (params.length === 0) {
+      if (duplicates.length > 0) {
         errors.push({
-          type: 'missing_parameters',
+          type: 'duplicate_parameters',
           command: 'G425',
+          duplicates: duplicates,
           location: {
             start: location().start,
             end: location().end,
@@ -1559,16 +1592,16 @@ g425Command 'G'
 // Expire time, in seconds
 // [string]	
 // An optional message to display on the LCD
-m0toM1Command 'M'
+m0toM1Command 
   = c:("M0" / "M1") !integer ws? params:m0toM1Parameter* string?{
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
       //If there are any duplicate parameters, push an error to the errors array.
-
-      if (params.length === 0) {
+      if (duplicates.length > 0) {
         errors.push({
-          type: 'missing_parameters',
+          type: 'duplicate_parameters',
           command: c,
+          duplicates: duplicates,
           location: {
             start: location().start,
             end: location().end,
@@ -1590,6 +1623,47 @@ m0toM1Command 'M'
     = p:"P" v:ms ws?{ return makeParameter(p, v, location()); }
     / p:"S" v:sec ws?{ return makeParameter(p, v, location()); }
     
+//M2 - Spindle CW / Laser On
+//   M3 [I<mode>] [O<power>] [S<power>]
+// Parameters
+// [I<mode>]	
+// Inline mode ON / OFF.
+// [O<power>]	
+// Spindle speed or laser power in PWM 0-255 value range
+// [S<power>]	
+// Spindle speed or laser power in the configured value range (see CUTTER_POWER_DISPLAY). (PWM 0-255 by default)
+m2Command 
+  = "M2" !integer ws? params:m2Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: 'M2',
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "M2",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end,
+        },
+      }; 
+    }
+
+  m2Parameter
+    = p:"I" v:bool ws?{ return makeParameter(p, v, location()); }
+    / p:"O" v:power ws?{ return makeParameter(p, v, location()); }
+    / p:"S" v:power ws?{ return makeParameter(p, v, location()); }
+
 
 //M3 - Spindle CW / Laser On
 //   M3 [I<mode>] [O<power>] [S<power>]
@@ -1600,21 +1674,22 @@ m0toM1Command 'M'
 // Spindle speed or laser power in PWM 0-255 value range
 // [S<power>]	
 // Spindle speed or laser power in the configured value range (see CUTTER_POWER_DISPLAY). (PWM 0-255 by default)
-m3Command 'M'
+m3Command 
     = "M3" !integer ws? params:m3Parameter* {
         const errors = []; 
-        const duplicates = findDuplicateParameters(params);
-        //If there are any duplicate parameters, push an error to the errors array.
-        if (params.length === 0) {
-          errors.push({
-            type: 'missing_parameters',
-            command: 'M3',
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-        }
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: 'M3',
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
         return {
           command: "M3",
           parameters: params,
@@ -1640,16 +1715,16 @@ m3Command 'M'
 // Spindle speed or laser power in PWM 0-255 value range
 // [S<power>]
 // Spindle speed or laser power in the configured value range (see CUTTER_POWER_UNIT). (PWM 0-255 by default)
-m4Command 'M'
+m4Command 
   = "M4" !integer ws? params:m4Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
       //If there are any duplicate parameters, push an error to the errors array.
-
-      if (params.length === 0) {
+      if (duplicates.length > 0) {
         errors.push({
-          type: 'missing_parameters',
+          type: 'duplicate_parameters',
           command: 'M4',
+          duplicates: duplicates,
           location: {
             start: location().start,
             end: location().end,
@@ -1672,3 +1747,589 @@ m4Command 'M'
     / p:"O" v:power ws?{ return makeParameter(p, v, location()); }
     / p:"S" v:power ws?{ return makeParameter(p, v, location()); }
 
+//M16 - Expected Printer Check
+// M16 string
+// Parameters
+// string	
+// The string to compare to MACHINE_NAME.
+m16Command 
+  = "M16" !integer ws? params:m16Parameter{
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: 'M16',
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "M16",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end,
+        },
+      }; 
+    }
+  
+m16Parameter 
+  = string:string { return string; }
+
+//M17 - Enable Steppers
+// M17 [E<flag>] [X<flag>] [Y<flag>] [Z<flag>]
+// Parameters
+// [E<flag>]	
+// E Enable
+// [X<flag>]	
+// X Enable
+// [Y<flag>]	
+// Y Enable
+// [Z<flag>]	
+// Z Enable
+m17Command 
+  = "M17" !integer ws? params:m17Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: 'M17',
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "M17",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end,
+        },
+      }; 
+    }
+
+  m17Parameter
+    = p:"E" v:flag ws?{ return makeParameter(p, v, location()); }
+    / p:"X" v:flag ws?{ return makeParameter(p, v, location()); }
+    / p:"Y" v:flag ws?{ return makeParameter(p, v, location()); }
+    / p:"Z" v:flag ws?{ return makeParameter(p, v, location()); }
+
+// M18, M84 - Disable steppers
+// M18 [E<flag>] [S<seconds>] [X<flag>] [Y<flag>] [Z<flag>]
+// M84 [E<flag>] [S<seconds>] [X<flag>] [Y<flag>] [Z<flag>]
+// Parameters
+// [E<flag>]	
+// E Disable
+// [S<seconds>]	
+// Inactivity Timeout. If none specified, disable now.
+// [X<flag>]	
+// X Disable
+// [Y<flag>]	
+// Y Disable
+// [Z<flag>]	
+// Z Disable
+m18andM84Command 
+  = c:("M18" / "M84") !integer ws? params:m18andM84Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: c,
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: c,
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end,
+        },
+      }; 
+    }
+
+  m18andM84Parameter
+    = p:"E" v:flag ws?{ return makeParameter(p, v, location()); }
+    / p:"S" v:seconds ws?{ return makeParameter(p, v, location()); }
+    / p:"X" v:flag ws?{ return makeParameter(p, v, location()); }
+    / p:"Y" v:flag ws?{ return makeParameter(p, v, location()); }
+    / p:"Z" v:flag ws?{ return makeParameter(p, v, location()); }
+
+//M20 - List SD Card
+//M20 [F] [L] [T]
+// Parameters
+// [F]  2.0.9.4 CUSTOM_FIRMWARE_UPLOAD	
+// Only list BIN files. Used by host plugins to facilitate firmware upload.
+// [L]  2.0.9 LONG_FILENAME_HOST_SUPPORT 	
+// Include the long filename in the listing.
+// [T]  2.1.2 M20_TIMESTAMP_SUPPORT	
+// Include the file timestamp in the listing.
+m20Command 
+  = "M20" !integer ws? params:m20Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: 'M20',
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "M20",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end,
+        },
+      }; 
+    }
+
+  m20Parameter
+    = p:"F" v:flag ws?{ return makeParameter(p, v, location()); }
+    / p:"L" v:flag ws?{ return makeParameter(p, v, location()); }
+    / p:"T" v:flag ws?{ return makeParameter(p, v, location()); }
+
+//M23 - Select SD file
+// M23 filename
+// Parameters
+// filename	
+// The filename of the file to open.
+m23Command
+  = "M23" !integer ws? params:m23Parameter {
+      const errors = []; 
+      return {
+        command: "M23",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end,
+        },
+      }; 
+    }
+
+m23Parameter
+  = filename:string { return filename; }    
+
+
+//M24 - Start or Resume SD print
+// M24 [S<pos>] [T<time>]
+// Parameters
+// [S<pos>]	
+// Position in file to resume from (requires POWER_LOSS_RECOVERY)
+// [T<time>]	
+// Elapsed time since start of print (requires POWER_LOSS_RECOVERY)
+m24Command 
+  = "M24" !integer ws? params:m24Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: 'M24',
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "M24",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end,
+        },
+      }; 
+    }
+
+  m24Parameter
+    = p:"S" v:pos ws?{ return makeParameter(p, v, location()); }
+    / p:"T" v:time ws?{ return makeParameter(p, v, location()); }
+
+//M26 - Set SD position
+// M26 [S<pos>]
+// Parameters
+// [S<pos>]	
+// Next file read position to set
+m26Command 
+  = "M26" !integer ws? params:m26Parameter* {
+     const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: 'M26',
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "M26",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end,
+        },
+      }; 
+    }
+
+  m26Parameter
+    = p:"S" v:pos ws?{ return makeParameter(p, v, location()); }
+
+//M27 - Report SD print status
+// M27 [C] [S<seconds>]
+// Parameters
+// [C]	
+// Report the filename and long filename of the current file
+// [S<seconds>]	
+// Interval between auto-reports. S0 to disable (requires AUTO_REPORT_SD_STATUS)
+m27Command 
+  = "M27" !integer ws? params:m27Parameter* {
+   const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: 'M27',
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "M27",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end,
+        },
+      }; 
+    }
+
+  m27Parameter
+    = p:"C" v:flag ws?{ return makeParameter(p, v, location()); }
+    / p:"S" v:seconds ws?{ return makeParameter(p, v, location()); }
+
+
+//M28 - Start SD write
+// M28 [B1] filename
+// Parameters
+// [B1]	
+// Set an optimized binary file transfer mode. (Requires BINARY_FILE_TRANSFER)
+// filename	
+// File name to write
+m28Command 
+  = "M28" !integer ws? params:m28Parameter ws string?{
+      const errors = []; 
+
+      return {
+        command: "M28",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end,
+        },
+      }; 
+    } 
+
+  m28Parameter
+    = p:"B1" v:flag ws?{ return makeParameter(p, v, location()); }
+    
+//M30 - Delete SD file
+// M30 filename
+// Parameters
+// filename	
+// The filename of the file to delete.
+m30Command 
+  = "M30" !integer ws? params:m30Parameter {
+      const errors = []; 
+      return {
+        command: "M30",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end, 
+        },
+      }; 
+    }
+
+  m30Parameter
+    = filename:string { return filename; }
+
+//M32 - Select and Start
+//M32 [P<flag>] [S<filepos>]
+// Parameters
+// [P<flag>]	
+// Sub-Program flag
+// [S<filepos>]	
+// Starting file offset
+m32Command 
+  = "M32" !integer ws? params:m32Parameter* {
+      const errors = []; 
+
+      return {
+        command: "M32",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end, 
+        },
+      }; 
+    }
+
+  m32Parameter
+    = p:"P" v:flag ws?{ return makeParameter(p, v, location()); }
+    / p:"S" v:filepos ws?{ return makeParameter(p, v, location()); }
+
+//M33 - Get Long Path
+// M33 path
+// Parameters
+// path	
+// DOS 8.3 path to a file or folder
+m33Command 
+  = "M33" !integer ws? path:m33Parameter {
+            const errors = []; 
+
+      return {
+        command: "M33",
+        parameters: path,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end, 
+        },
+      }; 
+    }
+
+  m33Parameter
+    = path:string { return path; }
+
+//M34 - SDCard Sorting
+// M34 [F<-1|0|1>] [S<bool>]
+// Parameters
+// [F<-1|0|1>]	
+// Folder Sorting
+// F-1: Folders before files
+// F0: No folder sorting
+// F1: Folders after files
+// [S<bool>]	
+// Sorting on/off
+m34Command 
+  = "M34" !integer ws? params:m34Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: 'M34',
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "M34",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end, 
+        },
+      }; 
+    }
+
+  m34Parameter
+    = p:"F" v:("-1" / "0" / "1") ws?{ return makeParameter(p, v, location()); }
+    / p:"S" v:bool ws?{ return makeParameter(p, v, location()); }
+
+//M42 - Set Pin State
+// M42 [I<bool>] [P<pin>] S<state> [T<0|1|2|3>]
+// Parameters
+// [I<bool>]  1.1.9.1	
+// Ignore protection on pins that Marlin is using.
+// [P<pin>]	
+// A digital pin number (even for analog pins) to write to. (LED_PIN if omitted)
+// S<state>	
+// The state to set. PWM pins may be set from 0-255.
+// [T<0|1|2|3>]  2.0.5.2	
+// Set the pin mode. Prior to Marlin 2.0.9.4 this is set with the M parameter.
+// T0: INPUT
+// T1: OUTPUT
+// T2: INPUT_PULLUP
+// T3: INPUT_PULLDOWN
+m42Command 
+  = c:"M42" !integer ws? params:m42Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: c,
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: c,
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end, 
+        },
+      }; 
+    }
+
+  m42Parameter
+    = p:"I" v:bool ws?{ return makeParameter(p, v, location()); }
+    / p:"P" v:pin ws?{ return makeParameter(p, v, location()); }
+    / p:"S" v:state ws?{ return makeParameter(p, v, location()); }
+    / p:"T" v:("0" / "1" / "2" / "3") ws?{ return makeParameter(p, v, location()); }
+
+//M43 - Debug Pins
+// M43 [E<bool>] [I] [P<pin>] [S] [T] [W]
+// Parameters
+// [E<bool>]	
+// Watch endstops
+// [I]	
+// Ignore protection when reporting values
+// [P<pin>]	
+// Digital Pin Number
+// [S]	
+// Test BLTouch type servo probes. Use P to specify servo index (0-3). Defaults to 0 if P omitted
+// [T]	
+// Toggle pins - see M43 T for options
+// [W]	
+// Watch pins
+m43Command 
+  = "M43" !integer ws? params:m43Parameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: 'M43',
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "M43",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start, 
+          end: location().end, 
+        },
+      }; 
+    }
+
+  m43Parameter
+    = p:"E" v:bool ws?{ return makeParameter(p, v, location()); }
+    / "I" ws?{ return makeParameter("I", true, location()); }
+    / p:"P" v:pin ws?{ return makeParameter(p, v, location()); }
+    / "S" ws?{ return makeParameter("S", true, location()); }
+    / "T" ws?{ return makeParameter("T", true, location()); }
+    / "W" ws?{ return makeParameter("W", true, location()); }
+
+//M43 T - Toggle Pins
+// M43 T [I<bool>] [L<pin>] [R<count>] [S<pin>] [W<time>]
+// Parameters
+// [I<bool>]	
+// Flag to ignore Marlin’s pin protection. Use with caution!!!!
+// [L<pin>]	
+// End Pin number. If not given, will default to last pin defined for this board
+// [R<count>]	
+// Repeat pulses on each pin this number of times before continuing to next pin. If not given will default to 1.
+// [S<pin>]	
+// Start Pin number. If not given, will default to 0
+// [W<time>]	
+// Wait time (in milliseconds) transitions. If not given will default to 500.
+m43tCommand
+  = "M43" ws "T" !integer ws? params:m43tParameter* {
+      const errors = []; 
+      const duplicates = findDuplicateParameters(params);
+      //If there are any duplicate parameters, push an error to the errors array.
+      if (duplicates.length > 0) {
+        errors.push({
+          type: 'duplicate_parameters',
+          command: 'M43 T',
+          duplicates: duplicates,
+          location: {
+            start: location().start,
+            end: location().end,
+          },
+        });
+      }
+      return {
+        command: "M43 T",
+        parameters: params,
+        errors: errors.length > 0 ? errors : null, 
+        location: {
+          start: location().start,
+          end: location().end, 
+        },
+      }; 
+    }
+
+  m43tParameter
+    = p:"I" v:bool ws?{ return makeParameter(p, v, location()); }
+    / p:"L" v:pin ws?{ return makeParameter(p, v, location()); }
+    / p:"R" v:integer ws?{ return makeParameter(p, v, location()); }
+    / p:"S" v:pin ws?{ return makeParameter(p, v, location()); }
+    / p:"W" v:integer ws?{ return makeParameter(p, v, location()); }
+
+  
