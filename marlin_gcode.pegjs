@@ -24,6 +24,29 @@
     });
     return duplicates;
   }
+
+  function createCommand(c, params, duplicates, errors, location) {
+  if (duplicates.length > 0) {
+    errors.push({
+      type: 'duplicate_parameters',
+      command: c,
+      duplicates: duplicates,
+      location: {
+        start: location.start,
+        end: location.end,
+      },
+    });
+  }
+  return {
+    command: c,
+    parameters: params,
+    errors: errors.length > 0 ? errors : null,
+    location: {
+      start: location.start,
+      end: location.end,
+    },
+  };
+}
 }
 
 start
@@ -2019,30 +2042,10 @@ m26Command
 // [S<seconds>]	
 // Interval between auto-reports. S0 to disable (requires AUTO_REPORT_SD_STATUS)
 m27Command 
-  = "M27" !integer ws? params:m27Parameter* {
-   const errors = []; 
+  = c:"M27" !integer ws? params:m27Parameter* {
+  const errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M27',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "M27",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      }; 
+      return createCommand(c, params, duplicates, errors, location());
     }
 
   m27Parameter
@@ -2157,30 +2160,10 @@ m33Command
 // [S<bool>]	
 // Sorting on/off
 m34Command 
-  = "M34" !integer ws? params:m34Parameter* {
-      const errors = []; 
+  = c:"M34" !integer ws? params:m34Parameter* {
+      const errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M34',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "M34",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end, 
-        },
-      }; 
+      return createCommand(c, params, duplicates, errors, location());
     }
 
   m34Parameter
@@ -2204,29 +2187,9 @@ m34Command
 // T3: INPUT_PULLDOWN
 m42Command 
   = c:"M42" !integer ws? params:m42Parameter* {
-      const errors = []; 
+      const errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: c,
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: c,
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end, 
-        },
-      }; 
+      return createCommand(c, params, duplicates, errors, location());
     }
 
   m42Parameter
