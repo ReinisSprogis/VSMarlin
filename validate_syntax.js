@@ -11,9 +11,7 @@ function validateAndProvideDiagnostics(document) {
   const gcode = document.getText();
   
   try {
-
     const marlinVersion = getMarlinVersion(gcode);
-    console.log("Marlin version: " + marlinVersion);
     const ast = marlinGcodeParser.parse(gcode, { collectErrors: true , marlinVersion: marlinVersion});
     
     ast.errors.forEach(error => {
@@ -29,8 +27,8 @@ function validateAndProvideDiagnostics(document) {
   diagnosticCollection.set(document.uri, diagnostics);
 }
 
+
 function createDiagnosticFromError(document, error) {
-  console.log("Error type: " + error );
   const start = document.positionAt(error.location.start.offset);
   const end = document.positionAt(error.location.end.offset);
   const range = new vscode.Range(start, end);
@@ -38,32 +36,40 @@ function createDiagnosticFromError(document, error) {
   let message = '';
 
 if (error.type === 'duplicate_parameters') {
+    //Showing if parameter is entered twice in command. And its not supported.
     message = `ERROR: Duplicate parameters in ${error.command} command: ${error.duplicates.join(', ')}`;
     return new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
   }else if(error.type === 'use_G1') {
+    //Suggestion to use G1 instead of G0 for print / laser-cutting moves.
+    //This is by documentation.
     message = `SUGGESTION: Use G1 for print / laser-cutting moves.`;
-    console.log(message);
     return new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Information);
   }else if(error.type === 'unallowed_parameter_combination_R_I_J') {
+    //Specific to G2/G3 commands. R, I, J parameters cannot be used together.
     message = `ERROR: R, I, J parameters cannot be used together.`;
-    console.log(message);
     return new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
   }else if(error.type === 'unallowed_parameter_combination_R_X_Y') {
-    message = `ERROR: Omitting both X and Y will not allowed in R form.`;
-    console.log(message);
+    //Specific to G2/G3 commands. Must be at least one of X or Y using R form.
+    message = `ERROR: Omitting both X and Y is not allowed in R form.`;
     return new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
-  }else if (error.type === 'unsupported_version' || error.type === 'unsupported_parameter_version') {
-    console.log("Unsupported version:" + error.name + " " + error.requiredVersion + " " + error.currentVersion );
+  }else if (error.type === 'unsupported_version' ) {
+    //Version control when command example G10 is supported or M73 in given version.
+    message = `ERROR: ${error.command}  is only supported in Marlin ${error.requiredVersion} or higher. Current version: ${error.currentVersion}.`;
+    return new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
+  }else if ( error.type === 'unsupported_parameter_version') {
+    //Version control when parameter example P is supported in given version.
     message = `ERROR: ${error.parameter}  is only supported in Marlin ${error.requiredVersion} or higher. Current version: ${error.currentVersion}.`;
     return new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
   }
   else {
+    //Mostly syntax error. Such as missing parameter or incorrect value type. 
     message = `${error.name}: ${error.message}`;
     return new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
   }
 }
 
 //Find marlin version
+//TODO: Optimize so that it does not search the whole document if match found, and every time text changes.
 function getMarlinVersion(gcode) {
   const regex = /;FLAVOR:Marlin\s+(\d+\.\d+\.\d+)/;
   const match = gcode.match(regex);
