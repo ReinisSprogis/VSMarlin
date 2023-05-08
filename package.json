@@ -91,6 +91,10 @@
       {
         "language": "marlin",
         "path": "./snippets/gcode_snippets.json"
+      },
+      {
+        "language": "marlin",
+        "path": "./snippets/snippets.json"
       }
     ],
     "configurationDefaults": {
@@ -145,14 +149,16 @@
               "foreground": "#e49c3e",
               "fontStyle": "bold"
             }
-          },{
+          },
+          {
             "name": "Iposition",
             "scope": "keyword.control.positionI",
             "settings": {
               "foreground": "#ff8888c2",
               "fontStyle": "bold"
             }
-          },{
+          },
+          {
             "name": "Jposition",
             "scope": "keyword.control.positionJ",
             "settings": {
@@ -225,6 +231,8 @@
     "cheerio": "^1.0.0-rc.12",
     "fast-diff": "^1.2.0",
     "markdown-it": "^13.0.1",
+    "pegjs": "^0.10.0",
+    "save": "^2.9.0",
     "serialport": "^10.5.0",
     "three": "^0.150.1"
   },
