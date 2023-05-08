@@ -1,3 +1,8 @@
+//This is a parser for Marlin. //Here can be set different rules for grammar. 
+//It is not a part of the project, but it is used to generate marling_gcode_parser.js.
+
+
+//Functions to use in the parser goes here.
 {
   function makeParameter(name, value, location) {
     return {
@@ -24,8 +29,85 @@
     });
     return duplicates;
   }
+  function compareVersions(v1, v2) {
+    const [major1, minor1, patch1] = v1.split('.').map(Number);
+    const [major2, minor2, patch2] = v2.split('.').map(Number);
   
+    if (major1 > major2) return 1;
+    if (major1 < major2) return -1;
+    if (minor1 > minor2) return 1;
+    if (minor1 < minor2) return -1;
+    if (patch1 > patch2) return 1;
+    if (patch1 < patch2) return -1;
+    return 0;
+  }
+  
+
+  //Version controll
+  function createCommand(c, params, duplicates, commandVersion, paramVersions, location) {
+  const errors = [];
+
+  if (duplicates.length > 0) {
+    errors.push({
+      type: 'duplicate_parameters',
+      command: c,
+      duplicates: duplicates,
+      location: {
+        start: location.start,
+        end: location.end,
+      },
+    });
+  }
+
+  if (commandVersion) {
+    if (compareVersions(options.marlinVersion, commandVersion.required) < 0) {
+      errors.push({
+        type: 'unsupported_version',
+        command: c,
+        requiredVersion: commandVersion.required,
+        currentVersion: options.marlinVersion,
+        location: {
+          start: location.start,
+          end: location.end,
+        },
+      });
+    }
+  }
+
+  params.forEach(param => {
+    const paramVersion = paramVersions.find(pv => pv.name === param.name);
+    if (paramVersion && compareVersions(options.marlinVersion, paramVersion.required) < 0) {
+      errors.push({
+        type: 'unsupported_parameter_version',
+        command: c,
+        parameter: param.name,
+        requiredVersion: paramVersion.required,
+        currentVersion: options.marlinVersion,
+        location: {
+          start: location.start,
+          end: location.end,
+        },
+      });
+    }
+  });
+
+  return {
+    command: c,
+    parameters: params,
+    errors: errors.length > 0 ? errors : null,
+    location: {
+      start: location.start,
+      end: location.end,
+    },
+  };
 }
+
+}
+
+
+//Start rule for the parser.
+//Line is expeted to start with one of the start rules.
+//Not sure if Marlin supports Line numbers, but i added, just in case.
 
 start
   = lineNumber? ws? commands:(gCommand / mCommand / comment / emptyLine)*  ws?  nl? {
@@ -1822,7 +1904,7 @@ g425Command
     / p:"V" v:flag ws?{ return makeParameter(p, v, location()); }
 
 
-    //************M Codes************//
+//************M Codes************//
 
 // M0 - M1 - Unconditional stop
 //M0 [P<ms>] [S<sec>] [string]
@@ -2638,31 +2720,17 @@ m48Command
 // Current print progress percentage
 // [R<minutes>]  2.0.0 USE_M73_REMAINING_TIME	
 // Set remaining time.
-m73Command 
-  = "M73" !integer ws? params:m73Parameter* {
-      const errors = []; 
+m73Command
+  = c:"M73" !integer ws? params:m73Parameter* {
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M73',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "M73",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end, 
-        },
-      };
+      const commandVersion = { required: "1.1.7" };
+      const paramVersions = [
+        { name: "P", required: "1.1.7" },
+        { name: "R", required: "2.0.0" }
+      ];
+      return createCommand(c, params, duplicates, commandVersion, paramVersions, location());
     }
+
 
   m73Parameter
     = p:"P" v:integer ws?{ return makeParameter(p, v, location()); }

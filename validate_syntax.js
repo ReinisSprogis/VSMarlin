@@ -11,7 +11,10 @@ function validateAndProvideDiagnostics(document) {
   const gcode = document.getText();
   
   try {
-    const ast = marlinGcodeParser.parse(gcode, { collectErrors: true });
+
+    const marlinVersion = getMarlinVersion(gcode);
+    console.log("Marlin version: " + marlinVersion);
+    const ast = marlinGcodeParser.parse(gcode, { collectErrors: true , marlinVersion: marlinVersion});
     
     ast.errors.forEach(error => {
       const diagnostic = createDiagnosticFromError(document, error);
@@ -49,11 +52,25 @@ if (error.type === 'duplicate_parameters') {
     message = `ERROR: Omitting both X and Y will not allowed in R form.`;
     console.log(message);
     return new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
+  }else if (error.type === 'unsupported_version' || error.type === 'unsupported_parameter_version') {
+    console.log("Unsupported version:" + error.name + " " + error.requiredVersion + " " + error.currentVersion );
+    message = `ERROR: ${error.parameter}  is only supported in Marlin ${error.requiredVersion} or higher. Current version: ${error.currentVersion}.`;
+    return new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
   }
   else {
     message = `${error.name}: ${error.message}`;
     return new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
   }
+}
+
+//Find marlin version
+function getMarlinVersion(gcode) {
+  const regex = /;FLAVOR:Marlin\s+(\d+\.\d+\.\d+)/;
+  const match = gcode.match(regex);
+  if (match) {
+    return match[1];
+  }
+  return "2.0.0";
 }
 
 
