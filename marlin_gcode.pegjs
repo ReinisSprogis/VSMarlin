@@ -29,6 +29,9 @@
     });
     return duplicates;
   }
+
+
+  
   function compareVersions(v1, v2) {
     const [major1, minor1, patch1] = v1.split('.').map(Number);
     const [major2, minor2, patch2] = v2.split('.').map(Number);
@@ -44,7 +47,7 @@
   
 
   //Version controll
-  function createCommand(c, params, duplicates, commandVersion, paramVersions, location) {
+  function createCommand(c, params, duplicates, commandVersion, paramVersions, requiredParams, location) {
   const errors = [];
 
   if (duplicates.length > 0) {
@@ -58,6 +61,20 @@
       },
     });
   }
+
+ requiredParams.forEach(paramName => {
+    if (!params.some(param => param.name === paramName)) {
+      errors.push({
+        type: 'missing_required_parameter',
+        command: c,
+        parameter: paramName,
+        location: {
+          start: location.start,
+          end: location.end,
+        },
+      });
+    }
+  });
 
   if (commandVersion) {
     if (compareVersions(options.marlinVersion, commandVersion.required) < 0) {
@@ -2728,7 +2745,8 @@ m73Command
         { name: "P", required: "1.1.7" },
         { name: "R", required: "2.0.0" }
       ];
-      return createCommand(c, params, duplicates, commandVersion, paramVersions, location());
+      const requiredParams = ["P"];
+      return createCommand(c, params, duplicates, commandVersion, paramVersions, requiredParams, location());
     }
 
 

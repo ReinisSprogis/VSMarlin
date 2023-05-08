@@ -60,6 +60,10 @@ if (error.type === 'duplicate_parameters') {
     //Version control when parameter example P is supported in given version.
     message = `ERROR: ${error.parameter}  is only supported in Marlin ${error.requiredVersion} or higher. Current version: ${error.currentVersion}.`;
     return new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
+  }else if ( error.type === 'missing_required_parameter') {
+    //Missing required parameter in command.
+    message = `ERROR: ${error.parameter}  is required in ${error.command}.`;
+    return new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
   }
   else {
     //Mostly syntax error. Such as missing parameter or incorrect value type. 
