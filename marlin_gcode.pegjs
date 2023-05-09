@@ -47,7 +47,7 @@
   
 
   //Version controll
-  function createCommand(c, params, duplicates, commandVersion, paramVersions, requiredParams, location) {
+  function createCommand(c, params, duplicates, commandVersion, paramVersions, requiredParams, error, location) {
   const errors = [];
 
   if (duplicates.length > 0) {
@@ -62,6 +62,11 @@
     });
   }
 
+if(error != null && error.length > 0){
+  errors.push(...error);
+}
+
+if(requiredParams !== null){
  requiredParams.forEach(paramName => {
     if (!params.some(param => param.name === paramName)) {
       errors.push({
@@ -75,6 +80,7 @@
       });
     }
   });
+}
 
   if (commandVersion) {
     if (compareVersions(options.marlinVersion, commandVersion.required) < 0) {
@@ -90,6 +96,8 @@
       });
     }
   }
+  
+
 
   params.forEach(param => {
     const paramVersion = paramVersions.find(pv => pv.name === param.name);
@@ -119,6 +127,33 @@
   };
 }
 
+//This is versions for all non parameter commands.
+function getRequiredVersionForCommand(command) {
+    switch (command) {
+      case "G17": return "1.0.0";
+      case "G18": return "1.0.0";
+      case "G19": return "1.0.0";
+      case "G20": return "1.1.0";
+      case "G21": return "1.1.0";
+      case "G31": return "1.0.0";
+      case "G32": return "1.0.0";
+      case "G53": return "1.0.0";
+      case "G54": return "1.0.0";
+      case "G55": return "1.0.0";
+      case "G56": return "1.0.0";
+      case "G57": return "1.0.0";
+      case "G58": return "1.0.0";
+      case "G59.1": return "1.0.0";
+      case "G59.2": return "1.0.0";
+      case "G59.3": return "1.0.0";
+      case "G59": return "1.0.0";
+      case "G80": return "1.0.0";
+      case "G90": return "1.0.0";
+      case "G91": return "1.0.0";
+      // Add cases for other commands with their required versions
+      default: return "1.0.0";
+    }
+  }
 }
 
 
@@ -425,7 +460,7 @@ gCommand
 
 //All gcodes that takes no parameters. So that only comment is allowed.
 noParamGCommand 
-  = (
+  = c:(
     "G17" /
     "G18" /
     "G19" /
@@ -446,14 +481,10 @@ noParamGCommand
     "G80" /
     "G90" /
     "G91" )!integer ws? {
-      return {
-        command: text(),
-        parameters: [],
-        location: {
-          start: location().start,
-          end: location().end,
-        },
+      const commandVersion = {
+        required: getRequiredVersionForCommand(c),
       };
+      return createCommand(c, [], [], commandVersion, [], [] , [], location());
     }
 
 //all M commands with parameters
@@ -686,21 +717,18 @@ noParamMCommands
 // An absolute or relative coordinate on the Y axis (in current units).
 // [Z<pos>]
 g0Command 
-  = "G0" !integer ws? params:g0Parameter* {
-      const errors = []; 
+  = c:"G0" !integer ws? params:g0Parameter* {
+    var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'G0',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "X", required: "1.0.0" },
+        { name: "Y", required: "1.0.0" },
+        { name: "Z", required: "1.0.0" },
+        { name: "E", required: "1.0.0" },
+        { name: "F", required: "1.0.0" },
+        { name: "S", required: "2.1.1" },
+      ];
       //Check if there is E or S parameter. If there is, will show suggestion to use G1 command.
       params.forEach(p => {
         if (p.name === 'E' || p.name === 'S') {
@@ -716,15 +744,7 @@ g0Command
         }
       });
 
-      return {
-        command: "G0",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
     }
 
 g0Parameter 
@@ -748,31 +768,22 @@ g0Parameter
 // An absolute or relative coordinate on the Y axis (in current units).
 // [Z<pos>]
 g1Command 
-  = "G1" !integer ws? params:g1Parameter* {
-      const errors = []; 
+  = c:"G1" !integer ws? params:g1Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'G1',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "G1",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
-    }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "X", required: "1.0.0" },
+        { name: "Y", required: "1.0.0" },
+        { name: "Z", required: "1.0.0" },
+        { name: "E", required: "1.0.0" },
+        { name: "F", required: "1.0.0" },
+        { name: "S", required: "2.1.1" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
+  }
 
 g1Parameter
   = p:("X" / "Y" / "Z" / "E" / "F" / "S") v:number {
@@ -806,21 +817,22 @@ g1Parameter
 // [Z<pos>]	
 // A coordinate on the Z axis
 g2Command 
-  = "G2" !integer ws params:g2Parameter* {
-      const errors = []; 
+  = c:"G2" !integer ws params:g2Parameter* {
+       var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'G2',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "X", required: "1.0.0" },
+        { name: "Y", required: "1.0.0" },
+        { name: "Z", required: "1.0.0" },
+        { name: "E", required: "1.0.0" },
+        { name: "F", required: "1.0.0" },
+        { name: "S", required: "2.0.8" },
+        { name: "I", required: "1.0.0" },
+        { name: "J", required: "1.0.0" },
+        { name: "R", required: "1.0.0" },
+        { name: "P", required: "1.0.0" },
+      ];
       //Check if there is I J and R parameters together. Use R form or I J form.
       let i = false;
       let j = false;
@@ -868,15 +880,7 @@ g2Command
         },
       });
     }
-      return {
-        command: "G2",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
     }
 
 g2Parameter
@@ -910,21 +914,22 @@ g2Parameter
 // [Z<pos>]	
 // A coordinate on the Z axis
 g3Command 
-  = "G3" !integer ws? params:g3Parameter* {
-      const errors = []; 
+  = c:"G3" !integer ws? params:g3Parameter* {
+       var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'G3',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "X", required: "1.0.0" },
+        { name: "Y", required: "1.0.0" },
+        { name: "Z", required: "1.0.0" },
+        { name: "E", required: "1.0.0" },
+        { name: "F", required: "1.0.0" },
+        { name: "S", required: "2.0.8" },
+        { name: "I", required: "1.0.0" },
+        { name: "J", required: "1.0.0" },
+        { name: "R", required: "1.0.0" },
+        { name: "P", required: "1.0.0" },
+      ];
       //Check if there is I J and R parameters together. Use R form or I J form.
       let i = false;
       let j = false;
@@ -972,15 +977,8 @@ g3Command
         },
       });
     }
-      return {
-        command: "G3",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
+      return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+  
     }
   
 
@@ -998,30 +996,16 @@ g3Parameter
 // Amount of time to dwell
 // [S<time(sec)>]
 g4Command 
-  = "G4" !integer ws? params:g4Parameter* {
-      const errors = []; 
+  = c:"G4" !integer ws? params:g4Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'G4',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "G4",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "P", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+      ];
+      return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
 g4Parameter
@@ -1050,31 +1034,25 @@ g4Parameter
 // Y<pos>	
 // A destination coordinate on the Y axis
 g5Command 
-  = "G5" !integer ws? params:g5Parameter* {
-      const errors = []; 
+  = c:"G5" !integer ws? params:g5Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'G5',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
+      const commandVersion = { required: "1.1.0" };
+      const paramVersions = [
+        { name: "X", required: "1.1.0" },
+        { name: "Y", required: "1.1.0" },
+        { name: "Z", required: "1.1.0" },
+        { name: "E", required: "1.1.0" },
+        { name: "F", required: "1.1.0" },
+        { name: "S", required: "2.0.8" },
+        { name: "I", required: "1.1.0" },
+        { name: "J", required: "1.1.0" },
+        { name: "P", required: "1.1.0" },
+        { name: "Q", required: "1.1.0" }
+      ];
 
-      return {
-        command: "G5",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
+ return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
 g5Parameter 
@@ -1100,30 +1078,23 @@ g5Parameter
 // [Z<direction>]	
 // 1 for positive, 0 for negative. Last value is cached for future invocations. Not used for directional formats.
 g6Command 
-  = "G6" !integer ws? params:g6Parameter* {
-      const errors = []; 
+  = c:"G6" !integer ws? params:g6Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'G6',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "G6",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "1.0.0" }; //undefined version
+      const paramVersions = [
+        { name: "X", required: "1.0.0" },
+        { name: "Y", required: "1.0.0" },
+        { name: "Z", required: "1.0.0" },
+        { name: "E", required: "1.0.0" },
+        { name: "I", required: "1.0.0" },
+        { name: "R", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+        ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
+    
     }
 
 g6Parameter 
@@ -1144,29 +1115,15 @@ g6Parameter
 // Use G10 S1 to do a swap retraction, before changing extruders. The subsequent G11 (after tool change) will do a swap recover. (Requires EXTRUDERS > 1)
  g10_11Command 
   = c:("G10" / "G11") !integer ws? params:g10_11Parameter* {
-      const errors = []; 
+          var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: c,
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: c,
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "S", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
 g10_11Parameter
@@ -1195,30 +1152,22 @@ g10_11Parameter
 // [Z]	
 // Include Z motion when cleaning with limited axes. (Leave out X, Y, and Z for non-limited cleaning.) 
 g12Command 
-  = "G12" !integer ws? params:g12Parameter* {
-      const errors = []; 
+  = c:"G12" !integer ws? params:g12Parameter* {
+         var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'G12',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "G12",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "1.1.0" };
+      const paramVersions = [
+        { name: "P", required: "1.1.0" },
+        { name: "R", required: "1.1.0" },
+        { name: "S", required: "1.1.0" },
+        { name: "T", required: "1.1.0" },
+        { name: "X", required: "1.1.0" },
+        { name: "Y", required: "1.1.0" },
+        { name: "Z", required: "1.1.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
 g12Parameter
@@ -1267,40 +1216,50 @@ g12Parameter
 // [Y<linear>]	
 // Y position (otherwise, current Y position)
 g26Command 
-  = "G26" !integer ws? params:g26Parameter* {
-      const errors = []; 
+  = c:"G26" !integer ws? params:g26Parameter* {
+         var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'G26',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "G26",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "1.1.0" };
+      const paramVersions = [
+        { name: "B", required: "1.1.0" },
+        { name: "C", required: "1.1.0" },
+        { name: "D", required: "1.1.0" },
+        { name: "F", required: "1.1.0" },
+        { name: "H", required: "1.1.0" },
+        { name: "I", required: "2.0.6" },
+        { name: "K", required: "1.1.0" },
+        { name: "L", required: "1.1.0" },
+        { name: "O", required: "1.1.0" },
+        { name: "P", required: "1.1.0" },
+        { name: "Q", required: "1.1.0" },
+        { name: "R", required: "1.1.0" },
+        { name: "S", required: "1.1.0" },
+        { name: "U", required: "1.1.0" },
+        { name: "X", required: "1.1.0" },
+        { name: "Y", required: "1.1.0" },
+      ];
+
+    return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());   
     }
   
 g26Parameter
-  = p:"B" v:integer ws?{ return makeParameter(p, v, location()); }
-  / p:"C" v:bool ws?{ return makeParameter(p, v, location()); }
+  =   p:"B" v:integer ws?{ return makeParameter(p, v, location()); }
+  / p:"C" v:flag ws?{ return makeParameter(p, v, location()); }
   / p:"D" v:flag ws?{ return makeParameter(p, v, location()); }
-  / p:"F" v:integer ws?{ return makeParameter(p, v, location()); }
+  / p:"F" v:number ws?{ return makeParameter(p, v, location()); }
   / p:"H" v:integer ws?{ return makeParameter(p, v, location()); }
   / p:"I" v:integer ws?{ return makeParameter(p, v, location()); }
-  / p:"K" v:bool ws?{ return makeParameter(p, v, location()); }
+  / p:"K" v:flag ws?{ return makeParameter(p, v, location()); }
+  / p:"L" v:number ws?{ return makeParameter(p, v, location()); }
+  / p:"O" v:number ws?{ return makeParameter(p, v, location()); }
+  / p:"P" v:number ws?{ return makeParameter(p, v, location()); }
+  / p:"Q" v:number ws?{ return makeParameter(p, v, location()); }
+  / p:"R" v:integer ws?{ return makeParameter(p, v, location()); }
+  / p:"S" v:number ws?{ return makeParameter(p, v, location()); }
+  / p:"U" v:number ws?{ return makeParameter(p, v, location()); }
+  / p:"X" v:number ws?{ return makeParameter(p, v, location()); }
+  / p:"Y" v:number ws?{ return makeParameter(p, v, location()); }
+  
 
 //G27 - Park toolhead
 //G27 [P<0|1|2>]
@@ -1311,30 +1270,15 @@ g26Parameter
 // P1: No matter the current Z-pos, the nozzle will be raised/lowered to reach Z-park height
 // P2: The nozzle height will be raised by Z-park amount but never going over the machine’s limit of Z_MAX_POS
   g27Command 
-    = "G27" !integer ws? params:g27Parameter* {
-        const errors = []; 
-        const duplicates = findDuplicateParameters(params);
-        //If there are any duplicate parameters, push an error to the errors array.
-        if (duplicates.length > 0) {
-          errors.push({
-            type: 'duplicate_parameters',
-            command: 'G27',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-        }
-        return {
-          command: "G27",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        };
+    = c:"G27" !integer ws? params:g27Parameter* {
+     var errors = [];
+      const duplicates = findDuplicateParameters(params);
+      const commandVersion = { required: "1.1.0" }; //undefined version
+      const paramVersions = [
+        { name: "P", required: "1.1.0" },
+        ];
+  
+  return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
       }
 
   g27Parameter
@@ -1361,30 +1305,20 @@ g26Parameter
 // [Z]	
 // Flag to home the Z axis
 g28Command 
-  = "G28" !integer ws? params:g28Parameter* {
-      const errors = []; 
+  = c:"G28" !integer ws? params:g28Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'G28',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "G28",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "1.0.0" }; //undefined version
+      const paramVersions = [
+        { name: "L", required: "1.0.0" },
+        { name: "O", required: "1.1.9" },
+        { name: "R", required: "1.1.9" },
+        { name: "X", required: "1.0.0" },
+        { name: "Y", required: "1.0.0" },
+        { name: "Z", required: "1.0.0" },
+        ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
     }
 
 g28Parameter
@@ -1417,30 +1351,18 @@ g28Parameter
 // [Y<pos>]	
 // Y probe position
   g30Command 
-    = "G30" !integer ws? params:g30Parameter* {
-        const errors = []; 
-        const duplicates = findDuplicateParameters(params);
-        //If there are any duplicate parameters, push an error to the errors array.
-        if (duplicates.length > 0) {
-          errors.push({
-            type: 'duplicate_parameters',
-            command: 'G30',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-        }
-        return {
-          command: "G30",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        };
+    = c:"G30" !integer ws? params:g30Parameter* {
+       var errors = [];
+      const duplicates = findDuplicateParameters(params);
+      const commandVersion = { required: "1.0.0" }; //undefined version
+      const paramVersions = [
+        { name: "C", required: "1.0.0" },
+        { name: "E", required: "1.0.0" },
+        { name: "X", required: "1.0.0" },
+        { name: "Y", required: "1.0.0" },
+        ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());    
       }
 
   g30Parameter
@@ -1487,30 +1409,21 @@ g28Parameter
 // V2: Report settings and probe results
 // V3: Report settings, probe results, and calibration results
 g33Command 
-  = "G33" !integer ws? params:g33Parameter* {
-      const errors = []; 
+  = c:"G33" !integer ws? params:g33Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'G33',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "G33",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "1.1.0" }; //undefined version
+      const paramVersions = [
+        { name: "C", required: "1.1.0" },
+        { name: "E", required: "1.1.0" },
+        { name: "F", required: "1.1.0" },
+        { name: "O", required: "2.0.9.2" },
+        { name: "P", required: "1.1.0" },
+        { name: "R", required: "2.0.9.2" },
+        { name: "T", required: "1.1.0" },
+        { name: "V", required: "1.1.0" },
+        ];
+  return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());         
     }
 
   g33Parameter
@@ -1541,31 +1454,19 @@ g33Command
 // [Z<linear>]	
 // Extra distance past Z_MAX_POS to move the Z axis. (Default: GANTRY_CALIBRATION_EXTRA_HEIGHT)
 g34Command 
-  = "G34" !integer ws? params:g34Parameter* {
-      const errors = []; 
+  = c:"G34" !integer ws? params:g34Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'G34',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      
-      return {
-        command: "G34",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "2.0.4" }; //undefined version
+      const paramVersions = [
+        { name: "A", required: "2.0.4" },
+        { name: "E", required: "2.0.4" },
+        { name: "I", required: "2.0.4" },
+        { name: "T", required: "2.0.4" },
+        { name: "S", required: "2.0.4" },
+        { name: "Z", required: "2.0.4" },
+        ];
+  return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location()); 
     }
 
 g34Parameter
@@ -1589,31 +1490,16 @@ g34Parameter
 // S50: M5 clockwise
 // S51: M5 counter-clockwise
 g35Command 
-  = "G35" !integer ws? params:g35Parameter* {
-      const errors = []; 
+  = c:"G35" !integer ws? params:g35Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'G35',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      
-      return {
-        command: "G35",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "1.0.0" }; //undefined version
+      const paramVersions = [
+        { name: "S", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+
     }
 
 g35Parameter
@@ -1635,29 +1521,17 @@ g35Parameter
 // Target Z
 g38_2to38_5Command 
   = c:("G38.2" / "G38.3" / "G38.4" / "G38.5") !integer ws? params:g38_2to38_5Parameter* {
-      const errors = []; 
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: c,
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: c,
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "1.1.0" }; //undefined version
+      const paramVersions = [
+        { name: "F", required: "1.1.0" },
+        { name: "X", required: "1.1.0" },
+        { name: "Y", required: "1.1.0" },
+        { name: "Z", required: "1.1.0" },
+        ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
     }
 
 g38_2to38_5Parameter
@@ -1676,30 +1550,17 @@ g38_2to38_5Parameter
 // [J<pos>]	
 // The row of the mesh coordinate
 g42Command 
-  = "G42" !integer ws? params:g42Parameter* {
-      const errors = []; 
+  = c:"G42" !integer ws? params:g42Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'G42',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "G42",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      }; 
+      const commandVersion = { required: "1.1.2" }; //undefined version
+      const paramVersions = [
+        { name: "F", required: "1.1.2" },
+        { name: "I", required: "1.1.2" },
+        { name: "J", required: "1.1.2" },
+        ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
     }
 
 g42Parameter
@@ -1713,30 +1574,15 @@ g42Parameter
 // [S<slot>]	
 // Memory slot. If omitted, the first slot (0) is used.
 g60Command 
-  = "G60" !integer ws? params:g60Parameter* {
-      const errors = []; 
+  = c:"G60" !integer ws? params:g60Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'G60',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "G60",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        }, 
-      }; 
+      const commandVersion = { required: "1.0.0" }; //undefined version
+      const paramVersions = [
+        { name: "S", required: "1.0.0" },
+        ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
     }
 
   g60Parameter
@@ -1758,30 +1604,20 @@ g60Command
 // [Z]	
 // Flag to restore the Z axis
 g61Command 
-  = "G61" !integer ws? params:g61Parameter* {
-      const errors = []; 
+  = c:"G61" !integer ws? params:g61Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'G61',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "G61",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end, 
-        },
-      }; 
+      const commandVersion = { required: "1.0.0" }; //undefined version
+      const paramVersions = [
+        { name: "E", required: "1.0.0" },
+        { name: "F", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+        { name: "X", required: "1.0.0" },
+        { name: "Y", required: "1.0.0" },
+        { name: "Z", required: "1.0.0" },
+        ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
     }
 
   g61Parameter
@@ -1800,30 +1636,15 @@ g61Command
 // Calibrate bed only
 // [P]
 g76Command 
-  = "G76" !integer ws? params:g76Parameter* {
-      const errors = []; 
+  = c:"G76" !integer ws? params:g76Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'G76',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "G76",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      }; 
+      const commandVersion = { required: "1.0.0" }; //undefined version
+      const paramVersions = [
+        { name: "B", required: "1.0.0" },
+        { name: "P", required: "1.0.0" },
+        ];
+  return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());       
     }
 
   g76Parameter
@@ -1843,30 +1664,18 @@ g76Command
 // [Z<pos>]	
 // New Z axis position
 g92Command 
-  = "G92" !integer ws? params:g92Parameter* {
-     const errors = []; 
+  = c:"G92" !integer ws? params:g92Parameter* {
+    var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'G92',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "G92",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end, 
-        },
-      }; 
+      const commandVersion = { required: "1.0.0" }; //undefined version
+      const paramVersions = [
+        { name: "X", required: "1.0.0" },
+        { name: "Y", required: "1.0.0" },
+        { name: "Z", required: "1.0.0" },
+        { name: "E", required: "1.0.0" },
+        ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
     }
 
   g92Parameter
@@ -1888,30 +1697,18 @@ g92Command
 // [V]	
 // Probe cube and print position, error, backlash and hotend offset. (Requires CALIBRATION_REPORTING)
 g425Command 
-  = "G425" !integer ws? params:g425Parameter* {
+  = c:"G425" !integer ws? params:g425Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'G425',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "G425",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end, 
-        },
-      }; 
+      const commandVersion = { required: "1.0.0" }; //undefined version
+      const paramVersions = [
+        { name: "B", required: "1.0.0" },
+        { name: "T", required: "1.0.0" },
+        { name: "U", required: "1.0.0" },
+        { name: "V", required: "1.0.0" },
+        ];
+
+    return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());     
     }
 
   g425Parameter
@@ -2746,7 +2543,7 @@ m73Command
         { name: "R", required: "2.0.0" }
       ];
       const requiredParams = ["P"];
-      return createCommand(c, params, duplicates, commandVersion, paramVersions, requiredParams, location());
+      return createCommand(c, params, duplicates, commandVersion, paramVersions, requiredParams,null, location());
     }
 
 

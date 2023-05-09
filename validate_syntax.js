@@ -64,6 +64,12 @@ if (error.type === 'duplicate_parameters') {
     //Missing required parameter in command.
     message = `ERROR: ${error.parameter}  is required in ${error.command}.`;
     return new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
+  } else if (error.type === 'deprecated_command') {
+    message = `WARNING: Command ${error.command} is deprecated since Marlin ${error.deprecated}.`;
+    return new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Warning);
+  } else if (error.type === 'deprecated_parameter') {
+    message = `WARNING: Parameter ${error.parameter} is deprecated since Marlin ${error.deprecated} in command ${error.command}.`;
+    return new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Warning);
   }
   else {
     //Mostly syntax error. Such as missing parameter or incorrect value type. 
