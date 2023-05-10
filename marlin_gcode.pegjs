@@ -351,9 +351,7 @@ beta
   = integer
 //Specifically floating point number.
 float 'Float'
-  = sign:("-")? intPart:[0-9]+ fracPart:("." [0-9]+) ws{
-      return parseFloat((sign || "") + intPart.join("") + (fracPart ? fracPart.join("") : ""));
-    }
+  = number
 
 factor 'Factor'
   = float
@@ -2785,7 +2783,7 @@ return createCommand(c, params, duplicates, commandVersion, paramVersions, null 
 m117Command 
   = c:"M117" !integer ws? params:m117Parameter {
      var errors = [];
-      const duplicates = findDuplicateParameters(params);
+      const duplicates = [];
       const commandVersion = { required: "1.0.0" };
       const paramVersions = [
       ];
@@ -5659,7 +5657,7 @@ return createCommand(c, params, duplicates, commandVersion, paramVersions, null 
 // [string]	
 // Set Macro to the given commands, separated by the pipe character.
 m810Command 
-  = c:("M810" / "M811" / "M812" / "M813" / "4" / "5" / "M8162" / "M8172" / "M818" / "M819" ) !integer ws? params:m810Parameter {
+  = c:("M810" / "M811" / "M812" / "M813"  / "M8162" / "M8172" / "M818" / "M819" ) !integer ws? params:m810Parameter {
       var errors = [];
       const duplicates = findDuplicateParameters(params);
       const commandVersion = { required: "1.0.0" };
@@ -5672,7 +5670,7 @@ return createCommand(c, params, duplicates, commandVersion, paramVersions, null 
   }
 
   m810Parameter
-    = v:string ws?{ return makeParameter(c, v, location()); }
+    = v:string? ws?{ return makeParameter(c, v, location()); }
 
 //M851 - XYZ Probe Offset
 // M851 [X<linear>] [Y<linear>] [Z<linear>]

@@ -9,28 +9,31 @@ function validateAndProvideDiagnostics(document) {
   const diagnostics = [];
 
   const gcode = document.getText();
-  
-  try {
-    const marlinVersion = getMarlinVersion(gcode);
-    const ast = marlinGcodeParser.parse(gcode, { collectErrors: true , marlinVersion: marlinVersion});
-    
-    ast.errors.forEach(error => {
-      const diagnostic = createDiagnosticFromError(document, error);
+  const marlinVersion = getMarlinVersion(gcode);
+  //Iterate thru all lines and pares each line to find errors and show them in correct lines
+  for(let i = 0; i < document.lineCount; i++) {
+    const line = document.lineAt(i);
+    const lineText = line.text;
+    console.log(i + " " + lineText);
+    try {
+      
+      const ast = marlinGcodeParser.parse(lineText, { collectErrors: true , marlinVersion: marlinVersion});
+      ast.errors.forEach(error => {
+        const diagnostic = createDiagnosticFromError(document, error,i);
+        diagnostics.push(diagnostic);
+      });
+    } catch (error) {
+      const diagnostic = createDiagnosticFromError(document, error,i);
       diagnostics.push(diagnostic);
-    });
-   
-  } catch (error) {
-    const diagnostic = createDiagnosticFromError(document, error);
-    diagnostics.push(diagnostic);
-    
+    }
   }
   diagnosticCollection.set(document.uri, diagnostics);
 }
 
 
-function createDiagnosticFromError(document, error) {
-  const start = document.positionAt(error.location.start.offset);
-  const end = document.positionAt(error.location.end.offset);
+function createDiagnosticFromError(document, error,lineNumber) {
+  const start = new vscode.Position(lineNumber, error.location.start.column - 1);
+  const end = new vscode.Position(lineNumber, error.location.end.column - 1);
   const range = new vscode.Range(start, end);
 
   let message = '';
@@ -65,9 +68,11 @@ if (error.type === 'duplicate_parameters') {
     message = `ERROR: ${error.parameter}  is required in ${error.command}.`;
     return new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
   } else if (error.type === 'deprecated_command') {
+    //Currently not implemented.
     message = `WARNING: Command ${error.command} is deprecated since Marlin ${error.deprecated}.`;
     return new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Warning);
   } else if (error.type === 'deprecated_parameter') {
+    //Currently not implemented.
     message = `WARNING: Parameter ${error.parameter} is deprecated since Marlin ${error.deprecated} in command ${error.command}.`;
     return new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Warning);
   }
