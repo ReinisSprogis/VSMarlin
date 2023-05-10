@@ -130,6 +130,7 @@ if(requiredParams !== null){
 //This is versions for all non parameter commands.
 function getRequiredVersionForCommand(command) {
     switch (command) {
+      //G-codes
       case "G17": return "1.0.0";
       case "G18": return "1.0.0";
       case "G19": return "1.0.0";
@@ -150,6 +151,57 @@ function getRequiredVersionForCommand(command) {
       case "G80": return "1.0.0";
       case "G90": return "1.0.0";
       case "G91": return "1.0.0";
+      //M-codes
+      case "M5": return "1.1.2";
+      case "M7": return "1.0.0";
+      case "M8": return "1.0.0";
+      case "M9": return "1.0.0";
+      case "M10": return "2.0.8";
+      case "M11": return "2.0.8";
+      case "M21": return "1.0.0";
+      case "M22": return "1.0.0";
+      case "M25": return "1.0.0";
+      case "M29": return "1.0.0";
+      case "M31": return "1.0.0";
+      case "M76": return "1.0.0";
+      case "M77": return "1.0.0";
+      case "M78": return "1.0.0";
+      case "M81": return "1.0.0";
+      case "M82": return "1.0.0";
+      case "M83": return "1.0.0";
+      case "M108": return "1.0.0";
+      case "M112": return "1.0.0";
+      case "M115": return "1.0.0";
+      case "M119": return "1.0.0";
+      case "M120": return "1.0.0";
+      case "M121": return "1.0.0";
+      case "M123": return "1.0.0";
+      case "M127": return "1.0.0";
+      case "M129": return "1.0.0";
+      case "M360": return "1.0.0";
+      case "M361": return "1.0.0";
+      case "M362": return "1.0.0";
+      case "M363": return "1.0.0";
+      case "M364": return "1.0.0";
+      case "M400": return "1.0.0";
+      case "M402": return "1.0.0";
+      case "M406": return "1.0.0";
+      case "M407": return "1.0.0";
+      case "M410": return "1.0.0";
+      case "M428": return "1.0.0";
+      case "M500": return "1.0.0";
+      case "M501": return "1.0.0";
+      case "M502": return "1.0.0";
+      case "M504": return "1.0.0";
+      case "M510": return "1.0.0";
+      case "M524": return "2.0.0";
+      case "M909": return "1.0.0";
+      case "M910": return "1.0.0";
+      case "M911": return "1.0.0";
+      case "M993": return "1.0.0";
+      case "M994": return "1.0.0";
+      case "M995": return "1.0.0";
+      case "M997": return "2.0.0";
       // Add cases for other commands with their required versions
       default: return "1.0.0";
     }
@@ -429,7 +481,7 @@ comment '; comment'
       };
     }
 
-//All g commands with parameters
+//All G commands with parameters
 gCommand 
   = c:(
     g0Command /
@@ -458,7 +510,7 @@ gCommand
     noParamGCommand
     ) { return c; }
 
-//All gcodes that takes no parameters. So that only comment is allowed.
+//All G-codes that takes no parameters. So that only comment is allowed.
 noParamGCommand 
   = c:(
     "G17" /
@@ -491,7 +543,6 @@ noParamGCommand
 mCommand 
   = c:(
     m0toM1Command / 
-    m2Command /
     m3Command /
     m4Command /
     m16Command /
@@ -1731,76 +1782,23 @@ g425Command
 // [string]	
 // An optional message to display on the LCD
 m0toM1Command 
-  = c:("M0" / "M1") !integer ws? params:m0toM1Parameter* string?{
-      const errors = []; 
+  = c:("M0" / "M1") !integer ws? params:m0toM1Parameter* string? {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: c,
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: c,
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      }; 
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "P", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+        { name: "string", required: "1.0.0" }
+      ];
+
+      return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
     }
 
   m0toM1Parameter
     = p:"P" v:ms ws?{ return makeParameter(p, v, location()); }
     / p:"S" v:sec ws?{ return makeParameter(p, v, location()); }
     
-//M2 - Spindle CW / Laser On
-//   M3 [I<mode>] [O<power>] [S<power>]
-// Parameters
-// [I<mode>]	
-// Inline mode ON / OFF.
-// [O<power>]	
-// Spindle speed or laser power in PWM 0-255 value range
-// [S<power>]	
-// Spindle speed or laser power in the configured value range (see CUTTER_POWER_DISPLAY). (PWM 0-255 by default)
-m2Command 
-  = "M2" !integer ws? params:m2Parameter* {
-      const errors = []; 
-      const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M2',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "M2",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      }; 
-    }
-
-  m2Parameter
-    = p:"I" v:bool ws?{ return makeParameter(p, v, location()); }
-    / p:"O" v:power ws?{ return makeParameter(p, v, location()); }
-    / p:"S" v:power ws?{ return makeParameter(p, v, location()); }
 
 
 //M3 - Spindle CW / Laser On
@@ -1813,30 +1811,18 @@ m2Command
 // [S<power>]	
 // Spindle speed or laser power in the configured value range (see CUTTER_POWER_DISPLAY). (PWM 0-255 by default)
 m3Command 
-    = "M3" !integer ws? params:m3Parameter* {
-        const errors = []; 
+    = c:"M3" !integer ws? params:m3Parameter* {
+       var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M3',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-        return {
-          command: "M3",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,
-            end: location().end, 
-          },
-        }; 
+      const commandVersion = { required: "1.1.2" };
+      const paramVersions = [
+        { name: "I", required: "1.1.2" },
+        { name: "O", required: "1.1.2" },
+        { name: "S", required: "1.1.2" },
+      ];
+
+      return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
       }
 
   m3Parameter
@@ -1854,30 +1840,18 @@ m3Command
 // [S<power>]
 // Spindle speed or laser power in the configured value range (see CUTTER_POWER_UNIT). (PWM 0-255 by default)
 m4Command 
-  = "M4" !integer ws? params:m4Parameter* {
-      const errors = []; 
+  = c:"M4" !integer ws? params:m4Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M4',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "M4",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      }; 
+      const commandVersion = { required: "1.1.2" };
+      const paramVersions = [
+        { name: "I", required: "1.1.2" },
+        { name: "O", required: "1.1.2" },
+        { name: "S", required: "1.1.2" },
+      ];
+
+      return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m4Parameter
@@ -1891,30 +1865,15 @@ m4Command
 // string	
 // The string to compare to MACHINE_NAME.
 m16Command 
-  = "M16" !integer ws? params:m16Parameter{
-      const errors = []; 
-      const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M16',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "M16",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      }; 
+  = c:"M16" !integer ws? params:m16Parameter{
+      var errors = [];
+      const duplicates = [];
+      const commandVersion = { required: "2.0.0" };
+      const paramVersions = [
+      ];
+
+      return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
 m16Parameter 
@@ -1932,30 +1891,21 @@ m16Parameter
 // [Z<flag>]	
 // Z Enable
 m17Command 
-  = "M17" !integer ws? params:m17Parameter* {
-      const errors = []; 
+  = c:"M17" !integer ws? params:m17Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M17',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "M17",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      }; 
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "E", required: "1.0.0" },
+        { name: "X", required: "1.0.0" },
+        { name: "Y", required: "1.0.0" },
+        { name: "Z", required: "1.0.0" },
+
+
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m17Parameter
@@ -1980,29 +1930,20 @@ m17Command
 // Z Disable
 m18andM84Command 
   = c:("M18" / "M84") !integer ws? params:m18andM84Parameter* {
-      const errors = []; 
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: c,
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: c,
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      }; 
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "E", required: "1.0.0" },
+        { name: "S", required: "2.1.1" },
+        { name: "X", required: "1.0.0" },
+        { name: "Y", required: "1.0.0" },
+        { name: "Z", required: "1.0.0" },
+       
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m18andM84Parameter
@@ -2022,30 +1963,17 @@ m18andM84Command
 // [T]  2.1.2 M20_TIMESTAMP_SUPPORT	
 // Include the file timestamp in the listing.
 m20Command 
-  = "M20" !integer ws? params:m20Parameter* {
+  = c:"M20" !integer ws? params:m20Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M20',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "M20",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      }; 
+      const commandVersion = { required: "1.0.0" }; //undefined version
+      const paramVersions = [
+        { name: "F", required: "2.0.9.4" },
+        { name: "L", required: "2.0.9" },
+        { name: "T", required: "2.1.2" },
+        ];
+
+      return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
     }
 
   m20Parameter
@@ -2059,17 +1987,15 @@ m20Command
 // filename	
 // The filename of the file to open.
 m23Command
-  = "M23" !integer ws? params:m23Parameter {
-      const errors = []; 
-      return {
-        command: "M23",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      }; 
+  = c:"M23" !integer ws? params:m23Parameter {
+      var errors = [];
+      const duplicates = [];
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+      ];
+
+      return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
 m23Parameter
@@ -2084,30 +2010,16 @@ m23Parameter
 // [T<time>]	
 // Elapsed time since start of print (requires POWER_LOSS_RECOVERY)
 m24Command 
-  = "M24" !integer ws? params:m24Parameter* {
+  = c:"M24" !integer ws? params:m24Parameter* {
       const errors = []; 
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M24',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "M24",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      }; 
+      const commandVersion = { required: "1.0.0" }; //undefined version
+      const paramVersions = [
+        { name: "S", required: "1.0.0" },
+        { name: "T", required: "1.0.0" },
+        ];
+
+      return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
     }
 
   m24Parameter
@@ -2120,30 +2032,16 @@ m24Command
 // [S<pos>]	
 // Next file read position to set
 m26Command 
-  = "M26" !integer ws? params:m26Parameter* {
-     const errors = []; 
-      const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M26',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "M26",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      }; 
+  = c:"M26" !integer ws? params:m26Parameter* {
+     var errors = [];
+      const duplicates = [];
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "S", required: "1.0.0" },
+      ];
+
+      return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m26Parameter
@@ -2157,30 +2055,17 @@ m26Command
 // [S<seconds>]	
 // Interval between auto-reports. S0 to disable (requires AUTO_REPORT_SD_STATUS)
 m27Command 
-  = "M27" !integer ws? params:m27Parameter* {
-   const errors = []; 
-      const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M27',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "M27",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      }; 
+  = c:"M27" !integer ws? params:m27Parameter* {
+    var errors = [];
+      const duplicates = [];
+      const commandVersion = { required: "1.0.0" }; //undefined version
+      const paramVersions = [
+        { name: "C", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+      ];
+
+      return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m27Parameter
@@ -2196,18 +2081,16 @@ m27Command
 // filename	
 // File name to write
 m28Command 
-  = "M28" !integer ws? params:m28Parameter ws string?{
-      const errors = []; 
+  = c:"M28" !integer ws? params:m28Parameter ws string?{
+       var errors = [];
+      const duplicates = [];
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "B1", required: "1.0.0" },
+      ];
 
-      return {
-        command: "M28",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      }; 
+      return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     } 
 
   m28Parameter
@@ -2219,17 +2102,15 @@ m28Command
 // filename	
 // The filename of the file to delete.
 m30Command 
-  = "M30" !integer ws? params:m30Parameter {
-      const errors = []; 
-      return {
-        command: "M30",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end, 
-        },
-      }; 
+  = c:"M30" !integer ws? params:m30Parameter {
+      var errors = [];
+      const duplicates = [];
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+      ];
+
+      return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m30Parameter
@@ -2243,18 +2124,17 @@ m30Command
 // [S<filepos>]	
 // Starting file offset
 m32Command 
-  = "M32" !integer ws? params:m32Parameter* {
-      const errors = []; 
+  = c:"M32" !integer ws? params:m32Parameter* {
+       var errors = [];
+      const duplicates = [];
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "P", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+      ];
 
-      return {
-        command: "M32",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end, 
-        },
-      }; 
+      return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m32Parameter
@@ -2267,18 +2147,15 @@ m32Command
 // path	
 // DOS 8.3 path to a file or folder
 m33Command 
-  = "M33" !integer ws? path:m33Parameter {
-            const errors = []; 
+  = c:"M33" !integer ws? path:m33Parameter {
+       var errors = [];
+      const duplicates = [];
+      const commandVersion = { required: "1.0.2" };
+      const paramVersions = [
+      ];
 
-      return {
-        command: "M33",
-        parameters: path,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end, 
-        },
-      }; 
+      return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m33Parameter
@@ -2295,30 +2172,18 @@ m33Command
 // [S<bool>]	
 // Sorting on/off
 m34Command 
-  = "M34" !integer ws? params:m34Parameter* {
-      const errors = []; 
-      const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M34',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "M34",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end, 
-        },
-      }; 
+  = c:"M34" !integer ws? params:m34Parameter* {
+      var errors = [];
+      const duplicates = [];
+      const commandVersion = { required: "1.1.0" };
+      const paramVersions = [
+        { name: "F", required: "1.1.0" },
+        { name: "S", required: "1.1.0" },
+      ];
+
+
+      return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m34Parameter
@@ -2342,29 +2207,18 @@ m34Command
 // T3: INPUT_PULLDOWN
 m42Command 
   = c:"M42" !integer ws? params:m42Parameter* {
-      const errors = []; 
-      const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: c,
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: c,
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end, 
-        },
-      }; 
+       var errors = [];
+      const duplicates = [];
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "I", required: "1.1.9.1" },
+        { name: "P", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+        { name: "T", required: "2.0.5.2" },
+      ];
+
+      return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m42Parameter
@@ -2389,39 +2243,30 @@ m42Command
 // [W]	
 // Watch pins
 m43Command 
-  = "M43" !integer ws? params:m43Parameter* {
-      const errors = []; 
+  = c:"M43" !integer ws? params:m43Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M43',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "M43",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end, 
-        },
-      }; 
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "E", required: "1.0.0" },
+        { name: "I", required: "1.0.0" },
+        { name: "P", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+        { name: "T", required: "1.0.0" },
+        { name: "W", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m43Parameter
     = p:"E" v:bool ws?{ return makeParameter(p, v, location()); }
-    / "I" ws?{ return makeParameter("I", true, location()); }
+    / p:"I" ws?{ return makeParameter("I", true, location()); }
     / p:"P" v:pin ws?{ return makeParameter(p, v, location()); }
-    / "S" ws?{ return makeParameter("S", true, location()); }
-    / "T" ws?{ return makeParameter("T", true, location()); }
-    / "W" ws?{ return makeParameter("W", true, location()); }
+    / p:"S" ws?{ return makeParameter("S", true, location()); }
+    / p:"T" ws?{ return makeParameter("T", true, location()); }
+    / p:"W" ws?{ return makeParameter("W", true, location()); }
 
 //M43 T - Toggle Pins
 // M43 T [I<bool>] [L<pin>] [R<count>] [S<pin>] [W<time>]
@@ -2437,30 +2282,20 @@ m43Command
 // [W<time>]	
 // Wait time (in milliseconds) transitions. If not given will default to 500.
 m43tCommand
-  = "M43" ws "T" !integer ws? params:m43tParameter* {
-      const errors = []; 
+  = c:("M43" ws "T") !integer ws? params:m43tParameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      //If there are any duplicate parameters, push an error to the errors array.
-      if (duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M43 T',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "M43 T",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end, 
-        },
-      }; 
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "I", required: "1.0.0" },
+        { name: "L", required: "1.0.0" },
+        { name: "R", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+        { name: "W", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m43tParameter
@@ -2492,29 +2327,23 @@ m43tCommand
 // [Y<pos>]	
 // Y Position
 m48Command 
-  = "M48" !integer ws? params:m48Parameter* {
-      const errors = []; 
+  = c:"M48" !integer ws? params:m48Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M48',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-        command: "M48",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end, 
-        },
-      };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "C", required: "1.0.0" },
+        { name: "E", required: "1.0.0" },
+        { name: "L", required: "1.0.0" },
+        { name: "P", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+        { name: "V", required: "1.0.0" },
+        { name: "X", required: "1.0.0" },
+        { name: "Y", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m48Parameter
@@ -2557,17 +2386,16 @@ m73Command
 // [string]	
 // A string to display in the LCD heading. (Requires DWIN_CREALITY_LCD_ENHANCED)
 m75Command 
-  = "M75" !integer ws? params:m75Parameter{
-      const errors = []; 
-      return {
-          command: "M75",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,
-            end: location().end, 
-          },
-        };
+  = c:"M75" !integer ws? params:m75Parameter{
+var errors = [];
+      const duplicates = findDuplicateParameters(params);
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m75Parameter
@@ -2580,33 +2408,20 @@ m75Command
 // [S]	
 // Report Power Supply state
 m80Command 
-  = "M80" !integer ws? params:m80Parameter* {
-      const errors = []; 
+  = c:"M80" !integer ws? params:m80Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M80',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-          command: "M80",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "S", required: "2.1.1" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m80Parameter
-    = "S" ws?{ return makeParameter("S", true, location()); }
+    = p:"S" ws?{ return makeParameter(p, true, location()); }
   
 //M85 - Inactivity Shutdown
 // M85 S<seconds>
@@ -2614,29 +2429,16 @@ m80Command
 // S<seconds>	
 // Max inactive seconds
 m85Command 
-  = "M85" !integer ws? params:m85Parameter* {
-      const errors = []; 
+  = c:"M85" !integer ws? params:m85Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M85',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-          command: "M85",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "S", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m85Parameter
@@ -2656,29 +2458,20 @@ m85Command
 // [Z<steps>]	
 // Z steps per unit
 m92Command 
-  = "M92" !integer ws? params:m92Parameter* {
-      const errors = []; 
+  = c:"M92" !integer ws? params:m92Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M92',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-          command: "M92",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "E", required: "1.0.0" },
+        { name: "T", required: "1.0.0" },
+        { name: "X", required: "1.0.0" },
+        { name: "Y", required: "1.0.0" },
+        { name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m92Parameter
@@ -2700,29 +2493,19 @@ m92Command
 // [I]	
 // Initialize the free memory pool so it can be watched and print vital statistics that define the free memory pool
 m100Command 
-  = "M100" !integer ws? params:m100Parameter* {
-      const errors = []; 
+  = c:"M100" !integer ws? params:m100Parameter* {
+var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M100',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-          command: "M100",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+          { name: "C", required: "1.0.0" },
+          { name: "D", required: "1.0.0" },
+          { name: "F", required: "1.0.0" },
+          { name: "I", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m100Parameter
@@ -2743,39 +2526,16 @@ m100Command
 // S0: Disable Adjustable Z Height
 // S>0: Set Adjustable Z Height in 0.1mm units (e.g., M102 S4 enables adjusting for Z <= 0.4mm.)
 m102Command 
-  = "M102" !integer ws? params:m102Parameter* {
-      const errors = []; 
+  = c:"M102" !integer ws? params:m102Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M102',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      if(params.length > 1) {
-        errors.push({
-          type: 'too_many_parameters',
-          command: 'M102',
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-          command: "M102",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "2.1.1" };
+      const paramVersions = [
+        { name: "S", required: "2.1.1" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m102Parameter
@@ -2796,29 +2556,20 @@ m102Command
 // [T<index>]	
 // Hotend index. If omitted, the currently active hotend will be used.
 m104Command 
-  = "M104" !integer ws? params:m104Parameter* {
-      const errors = []; 
+  = c:"M104" !integer ws? params:m104Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M104',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-      return {
-          command: "M104",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "B", required: "1.0.0" },
+        { name: "F", required: "1.0.0" },
+        { name: "I", required: "2.0.6" },
+        { name: "S", required: "1.0.0" },
+        { name: "T", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m104Parameter
@@ -2836,30 +2587,17 @@ m104Command
 // [T<index>]	
 // Hotend index
 m105Command 
-  = "M105" !integer ws? params:m105Parameter* {
-      const errors = []; 
+  = c:"M105" !integer ws? params:m105Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M105',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-  
-      return {
-          command: "M105",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "R", required: "1.0.0" },
+        { name: "T", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m105Parameter
@@ -2881,30 +2619,19 @@ m105Command
 // M106 P<fan> T2 uses the set secondary speed.
 // M106 P<fan> T1 restores the previous fan speed.
 m106Command 
-  = "M106" !integer ws? params:m106Parameter* {
-      const errors = []; 
+  = c:"M106" !integer ws? params:m106Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M106',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-  
-      return {
-          command: "M106",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "I", required: "2.0.6" },
+        { name: "P", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+        { name: "T", required: "1.1.7" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m106Parameter
@@ -2919,30 +2646,16 @@ m106Command
 // [P<index>]	
 // Fan index
 m107Command 
-  = "M107" !integer ws? params:m107Parameter* {
-      const errors = []; 
+  = c:"M107" !integer ws? params:m107Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M107',
-          duplicates: duplicates,
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        });
-      }
-  
-      return {
-          command: "M107",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "P", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m107Parameter
@@ -2964,30 +2677,21 @@ m107Command
 // [T<index>]	
 // Hotend index. If omitted, the currently active hotend will be used.
 m109Command 
-  = "M109" !integer ws? params:m109Parameter* {
-      const errors = []; 
+  = c:"M109" !integer ws? params:m109Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M109',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M109",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "B", required: "1.0.0" },
+        { name: "F", required: "1.0.0" },
+        { name: "I", required: "2.0.6" },
+        { name: "R", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+        { name: "T", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m109Parameter
@@ -3004,30 +2708,16 @@ m109Command
 // N<line>	
 // Line number
 m110Command 
-  = "M110" !integer ws? params:m110Parameter* {
-      const errors = []; 
+  = c:"M110" !integer ws? params:m110Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M110',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M110",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "N", required: "1.0.0" },
+      ];
+      const requiredParams = ["N"];
+return createCommand(c, params, duplicates, commandVersion, paramVersions, requiredParams , errors, location());
+    
     }
 
   m110Parameter
@@ -3043,30 +2733,16 @@ m110Command
 // [S<seconds>]	
 // Keepalive interval (0-60).
 m113Command 
-  = "M113" !integer ws? params:m113Parameter* {
-      const errors = []; 
+  = c:"M113" !integer ws? params:m113Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M113',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M113",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,
-            end: location().end,
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "S", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m113Parameter
@@ -3082,30 +2758,18 @@ m113Command
 // [R]	
 // Real position information (requires M114_REALTIME)
 m114Command 
-  = "M114" !integer ws? params:m114Parameter* {
-      const errors = []; 
+  = c:"M114" !integer ws? params:m114Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M114',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M114",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "D", required: "1.0.0" },
+        { name: "E", required: "1.0.0" },
+        { name: "R", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m114Parameter
@@ -3119,17 +2783,15 @@ m114Command
 // [string]	
 // LCD status message
 m117Command 
-  = "M117" !integer ws? params:m117Parameter {
-      const errors = []; 
-      return {
-          command: "M117",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,
-            end: location().end, 
-          },
-        };
+  = c:"M117" !integer ws? params:m117Parameter {
+     var errors = [];
+      const duplicates = findDuplicateParameters(params);
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m117Parameter
@@ -3150,36 +2812,24 @@ m117Command
 // [string]	
 // Message string. If omitted, a blank line will be sent.
 m118Command 
-  = "M118" !integer ws? params:m118Parameter {
-      const errors = []; 
+  = c:"M118" !integer ws? params:m118Parameter {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M118',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M118",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start, 
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "A1", required: "1.0.0" },
+        { name: "E1", required: "1.0.0" },
+        { name: "Pn", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m118Parameter
     = "A1" ws?{ return makeParameter("A1", true, location()); }
     / "E1" ws?{ return makeParameter("E1", true, location()); }
-    / p:"P" v:integer ws?{ return makeParameter(p, v, location()); }
+    / p:"Pn" v:integer ws?{ return makeParameter(p, v, location()); }
     / string:string { return string; }
 
 // M122 - TMC Debugging
@@ -3202,30 +2852,23 @@ m118Command
 // [Z]	
 // Target Z driver(s) only.
 m122Command 
-  = "M122" !integer ws? params:m122Parameter* {
-      const errors = []; 
+  = c:"M122" !integer ws? params:m122Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M122',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M122",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start, 
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.1.7" };
+      const paramVersions = [
+        { name: "E", required: "1.0.0" },
+        { name: "I", required: "2.0.6" },
+        { name: "P", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+        { name: "V", required: "1.0.0" },
+        { name: "X", required: "1.0.0" },
+        { name: "Y", required: "1.0.0" },
+        { name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m122Parameter
@@ -3252,30 +2895,20 @@ m122Command
 // [Z<linear>]	
 // Z raise before park (otherwise FILAMENT_CHANGE_Z_ADD)
 m125Command 
-  = "M125" !integer ws? params:m125Parameter* {
-      const errors = []; 
+  = c:"M125" !integer ws? params:m125Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M125',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M125",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start, 
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "L", required: "1.0.0" },
+        { name: "P", required: "1.0.0" },
+        { name: "X", required: "1.0.0" },
+        { name: "Y", required: "1.0.0" },
+        { name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m125Parameter
@@ -3292,30 +2925,16 @@ m125Command
 // [S<pressure>]	
 // Valve pressure
 m126Command 
-  = "M126" !integer ws? params:m126Parameter* {
-      const errors = []; 
+  = c:"M126" !integer ws? params:m126Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M126',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M126",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start, 
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "S", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m126Parameter
@@ -3327,30 +2946,16 @@ m126Command
 // [S<pressure>]	
 // Valve pressure
 m128Command 
-  = "M128" !integer ws? params:m128Parameter* {
-      const errors = []; 
+  = c:"M128" !integer ws? params:m128Parameter* {
+   var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M128',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M128",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start, 
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "S", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m128Parameter
@@ -3364,30 +2969,17 @@ m128Command
 // [S<temp>]	
 // Target temperature
 m140Command 
-  = "M140" !integer ws? params:m140Parameter* {
-      const errors = []; 
+  = c:"M140" !integer ws? params:m140Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M140',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M140",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start, 
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "I", required: "2.0.6" },
+        { name: "S", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m140Parameter
@@ -3401,30 +2993,16 @@ m140Command
 // Target temperature.
 // AUTOTEMP: the min auto-temperature.
 m141Command 
-  = "M141" !integer ws? params:m141Parameter* {
-      const errors = []; 
+  = c:"M141" !integer ws? params:m141Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M141',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M141",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start, 
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "S", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m141Parameter
@@ -3437,30 +3015,16 @@ m141Command
 // [S<temp>]	
 // Target laser coolant temperature.
 m143Command 
-  = "M143" !integer ws? params:m143Parameter* {
-      const errors = []; 
+  = c:"M143" !integer ws? params:m143Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M143',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "2.0.8" };
+      const paramVersions = [
+        { name: "S", required: "2.0.8" },
+      ];
 
-      return {
-          command: "M143",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start, 
-            end: location().end, 
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m143Parameter
@@ -3478,30 +3042,19 @@ m143Command
 // [S<index>]	
 // Material index
 m145Command 
-  = "M145" !integer ws? params:m145Parameter* {
-      const errors = []; 
+  = c:"M145" !integer ws? params:m145Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-            type: 'duplicate_parameters',
-            command: 'M145',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "B", required: "1.0.0" },
+        { name: "F", required: "1.0.0" },
+        { name: "H", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+      ];
 
-      return {
-          command: "M145",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start, 
-            end: location().end, 
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m145Parameter
@@ -3520,30 +3073,18 @@ m145Command
 // [K]	
 // Kelvin
 m149Command 
-  = "M149" !integer ws? params:m149Parameter* {
-      const errors = []; 
+  = c:"M149" !integer ws? params:m149Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-            type: 'duplicate_parameters',
-            command: 'M149',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "C", required: "1.0.0" },
+        { name: "F", required: "1.0.0" },
+        { name: "K", required: "1.0.0" },
+      ];
 
-      return {
-          command: "M149",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start, 
-            end: location().end, 
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m149Parameter
@@ -3571,30 +3112,23 @@ m149Command
 // [W<intensity>]	
 // White component from 0 to 255 (RGBW_LED or NEOPIXEL_LED only)
 m150Command 
-  = "M150" !integer ws? params:m150Parameter* {
-      const errors = []; 
+  = c:"M150" !integer ws? params:m150Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-            type: 'duplicate_parameters',
-            command: 'M150',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "B", required: "1.0.0" },
+        { name: "I", required: "2.0.6" },
+        { name: "K", required: "1.0.0" },
+        { name: "P", required: "1.0.0" },
+        { name: "R", required: "1.0.0" },
+        { name: "S", required: "2.0.6.1" },
+        { name: "U", required: "1.0.0" },
+        { name: "W", required: "1.0.0" },
+      ];
 
-      return {
-          command: "M150",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start, 
-            end: location().end, 
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m150Parameter
@@ -3613,30 +3147,16 @@ m150Command
 // [S<seconds>]	
 // Interval in seconds between auto-reports. S0 to disable.
 m154Command 
-  = "M154" !integer ws? params:m154Parameter* {
-      const errors = []; 
+  = c:"M154" !integer ws? params:m154Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-            type: 'duplicate_parameters',
-            command: 'M154',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "2.0.8.1" };
+      const paramVersions = [
+        { name: "S", required: "2.0.8.1" },
+      ];
 
-      return {
-          command: "M154",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start, 
-            end: location().end, 
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m154Parameter
@@ -3648,30 +3168,16 @@ m154Command
 // [S<seconds>]	
 // Interval in seconds between auto-reports. S0 to disable.
 m155Command 
-  = "M155" !integer ws? params:m155Parameter* {
-      const errors = []; 
+  = c:"M155" !integer ws? params:m155Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-            type: 'duplicate_parameters',
-            command: 'M155',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "S", required: "1.0.0" },
+      ];
 
-      return {
-          command: "M155",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start, 
-            end: location().end, 
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m155Parameter
@@ -3685,30 +3191,17 @@ m155Command
 // [S<index>]	
 // Component index
 m163Command 
-  = "M163" !integer ws? params:m163Parameter* {
-      const errors = []; 
+  = c:"M163" !integer ws? params:m163Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-            type: 'duplicate_parameters',
-            command: 'M163',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "P", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+      ];
 
-      return {
-          command: "M163",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end, 
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m163Parameter
@@ -3721,30 +3214,16 @@ m163Command
 // S<index>	
 // Tool index (active virtual tool if omitted)
 m164Command 
-  = "M164" !integer ws? params:m164Parameter* {
-      const errors = []; 
+  = c:"M164" !integer ws? params:m164Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-            type: 'duplicate_parameters',
-            command: 'M164',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "S", required: "1.0.0" },
+      ];
 
-      return {
-          command: "M164",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end, 
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m164Parameter
@@ -3766,30 +3245,21 @@ m164Command
 // [I<factor>]	
 // Mix factor 6
   m165Command
-    = "M165" !integer ws? params:m165Parameter* {
-        const errors = []; 
-        const duplicates = findDuplicateParameters(params);
-        if(duplicates.length > 0) {
-          errors.push({ 
-              type: 'duplicate_parameters',
-              command: 'M165',
-              duplicates: duplicates,
-              location: {
-                start: location().start,
-                end: location().end,
-              },
-            });
-        }
-  
-        return {
-            command: "M165",
-            parameters: params,
-            errors: errors.length > 0 ? errors : null, 
-            location: {
-              start: location().start,  
-              end: location().end, 
-            },
-          };
+    = c:"M165" !integer ws? params:m165Parameter* {
+       var errors = [];
+      const duplicates = findDuplicateParameters(params);
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "A", required: "1.0.0" },
+        { name: "B", required: "1.0.0" },
+        { name: "C", required: "1.0.0" },
+        { name: "D", required: "1.0.0" },
+        { name: "H", required: "1.0.0" },
+        { name: "I", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
       }
     
     m165Parameter
@@ -3816,30 +3286,21 @@ m164Command
 // Z<linear>	
 // Ending Z Height. (Use A to set the Starting Z Height.)
 m166Command 
-  = "M166" !integer ws? params:m166Parameter* {
-      const errors = []; 
+  = c:"M166" !integer ws? params:m166Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-            type: 'duplicate_parameters',
-            command: 'M166',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "2.0.0" };
+      const paramVersions = [
+        { name: "A", required: "2.0.0" },
+        { name: "I", required: "2.0.0" },
+        { name: "J", required: "2.0.0" },
+        { name: "S", required: "2.0.0" },
+        { name: "T", required: "2.0.0" },
+        { name: "Z", required: "2.0.0" },
+      ];
 
-      return {
-          command: "M166",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end, 
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m166Parameter
@@ -3860,30 +3321,18 @@ m166Command
 // [S<temp>]	
 // Target temperature (wait only when heating).
 m190Command 
-  = "M190" !integer ws? params:m190Parameter* {
-      const errors = []; 
+  = c:"M190" !integer ws? params:m190Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-            type: 'duplicate_parameters',
-            command: 'M190',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "I", required: "2.0.6" },
+        { name: "R", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+      ];
 
-      return {
-          command: "M190",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end, 
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m190Parameter
@@ -3899,30 +3348,17 @@ m190Command
 // [S<temp>]	
 // Target temperature (wait only when heating).
 m191Command 
-  = "M191" !integer ws? params:m191Parameter* {
-      const errors = []; 
+  = c:"M191" !integer ws? params:m191Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-            type: 'duplicate_parameters',
-            command: 'M191',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M191",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "R", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m191Parameter
@@ -3937,30 +3373,17 @@ m191Command
 // [S<temp>]	
 // A minimum temperature to wait for. No wait if already higher.
 m192Command 
-  = "M192" !integer ws? params:m192Parameter* {
-      const errors = []; 
+  = c:"M192" !integer ws? params:m192Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-            type: 'duplicate_parameters',
-            command: 'M192',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M192",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "2.0.6.2" };
+      const paramVersions = [
+        { name: "R", required: "2.0.6.2" },
+        { name: "S", required: "2.0.6.2" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m192Parameter
@@ -3973,30 +3396,16 @@ m192Command
 // [S<temp>]	
 // Target laser coolant temperature.
 m193Command 
-  = "M193" !integer ws? params:m193Parameter* {
-      const errors = []; 
+  = c:"M193" !integer ws? params:m193Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-            type: 'duplicate_parameters',
-            command: 'M193',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M193",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "2.0.8" };
+      const paramVersions = [
+        { name: "S", required: "2.0.8" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m193Parameter
@@ -4014,30 +3423,19 @@ m193Command
 // [T<index>]	
 // Extruder index. If omitted, the currently active extruder will be used.
 m200Command 
-  = "M200" !integer ws? params:m200Parameter* {
-      const errors = []; 
+  = c:"M200" !integer ws? params:m200Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-            type: 'duplicate_parameters',
-            command: 'M200',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M200",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "D", required: "1.0.0" },
+        { name: "L", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+        { name: "T", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m200Parameter
@@ -4064,30 +3462,22 @@ m200Command
 // [Z<accel>]	
 // Z axis max acceleration
 m201Command 
-  = "M201" !integer ws? params:m201Parameter* {
-      const errors = []; 
+  = c:"M201" !integer ws? params:m201Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-            type: 'duplicate_parameters',
-            command: 'M201',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M201",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "E", required: "1.0.0" },
+        { name: "F", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+        { name: "T", required: "1.0.0" },
+        { name: "X", required: "1.0.0" },
+        { name: "Y", required: "1.0.0" },
+        { name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m201Parameter
@@ -4113,30 +3503,20 @@ m201Command
 // [Z<units/s>]	
 // Z axis max feedrate
 m203Command 
-  = "M203" !integer ws? params:m203Parameter* {
-      const errors = []; 
+  = c:"M203" !integer ws? params:m203Parameter* {
+var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-            type: 'duplicate_parameters',
-            command: 'M203',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M203",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "E", required: "1.0.0" },
+        { name: "T", required: "1.0.0" },
+        { name: "X", required: "1.0.0" },
+        { name: "Y", required: "1.0.0" },
+        { name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m203Parameter
@@ -4158,30 +3538,19 @@ m203Command
 // [T<accel>]	
 // Travel acceleration. Used for moves that include no extrusion.
 m204Command 
-  = "M204" !integer ws? params:m204Parameter* {
-      const errors = []; 
+  = c:"M204" !integer ws? params:m204Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-            type: 'duplicate_parameters',
-            command: 'M204',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M204",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "P", required: "1.0.0" },
+        { name: "R", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+        { name: "T", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m204Parameter
@@ -4210,30 +3579,23 @@ m204Command
 // [Z<jerk>]	
 // Z max jerk (units/s)
 m205Command 
-  = "M205" !integer ws? params:m205Parameter* {
-      const errors = []; 
+  = c:"M205" !integer ws? params:m205Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-            type: 'duplicate_parameters',
-            command: 'M205',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M205",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,   
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "B", required: "1.0.0" },
+        { name: "E", required: "1.0.0" },
+        { name: "J", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+        { name: "T", required: "1.0.0" },
+        { name: "X", required: "1.0.0" },
+        { name: "Y", required: "1.0.0" },
+        { name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m205Parameter
@@ -4260,30 +3622,20 @@ m205Command
 // [Z<offset>]	
 // Z home offset
 m206Command 
-  = "M206" !integer ws? params:m206Parameter* {
-      const errors = []; 
+  = c:"M206" !integer ws? params:m206Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M206',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M206",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,   
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        {  name: "P", required: "1.0.0" },
+        {  name: "T", required: "1.0.0" },
+        {  name: "X", required: "1.0.0" },
+        {  name: "Y", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m206Parameter
@@ -4305,30 +3657,19 @@ m206Command
 // [Z<length>]	
 // Z lift on retraction
 m207Command 
-  = "M207" !integer ws? params:m207Parameter* {
-      const errors = []; 
+  = c:"M207" !integer ws? params:m207Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M207',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M207",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,   
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "F", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+        {  name: "W", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m207Parameter
@@ -4349,30 +3690,19 @@ m207Command
 // [W<length>]	
 // Additional recover swap length. Can be negative to reduce the length.
 m208Command 
-  = "M208" !integer ws? params:m208Parameter* {
-      const errors = []; 
+  = c:"M208" !integer ws? params:m208Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M208',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M208",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,   
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "F", required: "1.0.0" },
+        {  name: "R", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+        {  name: "W", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m208Parameter
@@ -4387,30 +3717,16 @@ m208Command
 // S<flag>	
 // Set Auto-Retract on/off
 m209Command 
-  = "M209" !integer ws? params:m209Parameter* {
-      const errors = []; 
+  = c:"M209" !integer ws? params:m209Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M209',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M209",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,   
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "S", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m209Parameter
@@ -4423,30 +3739,16 @@ m209Command
 // [S<flag>]	
 // Software endstops state (S1=enable S0=disable)
 m211Command 
-  = "M211" !integer ws? params:m211Parameter* {
-      const errors = []; 
+  = c:"M211" !integer ws? params:m211Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M211',
-            duplicates: duplicates,
-            location: {
-              start: location().start,
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M211",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,   
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "S", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m211Parameter
@@ -4488,30 +3790,31 @@ m211Command
 // [Z<feedrate>]	
 // Z Raise.
   m217Command 
-  = "M217" !integer ws? params:m217Parameter* {
-      const errors = []; 
+  = c:"M217" !integer ws? params:m217Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M217',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M217",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,   
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "2.0.0" };
+      const paramVersions = [
+        { name: "A", required: "2.0.0" },
+        { name: "B", required: "2.0.0" },
+        { name: "E", required: "2.0.0" },
+        { name: "F", required: "2.0.0" },
+        { name: "G", required: "2.0.0" },
+        { name: "L", required: "2.0.0" },
+        { name: "P", required: "2.0.0" },
+        { name: "Q", required: "2.0.0" },
+        { name: "R", required: "2.0.0" },
+        { name: "S", required: "2.0.0" },
+        { name: "U", required: "2.0.0" },
+        { name: "V", required: "2.0.0" },
+        { name: "W", required: "2.0.0" },
+        { name: "X", required: "2.0.0" },
+        { name: "Y", required: "2.0.0" },
+        { name: "Z", required: "2.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m217Parameter
@@ -4544,30 +3847,19 @@ m211Command
 // [Z<offset>]	
 // Hotend Z offset. Requires DUAL_X_CARRIAGE or SWITCHING_NOZZLE.
 m218Command 
-  = "M218" !integer ws? params:m218Parameter* {
-      const errors = []; 
+  = c:"M218" !integer ws? params:m218Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M218',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M218",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,   
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "T", required: "1.0.0" },
+        {  name: "X", required: "1.0.0" },
+        {  name: "Y", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m218Parameter
@@ -4586,30 +3878,15 @@ m218Command
 // [S<percent>]	
 // Feedrate percentage
 m220Command 
-  = "M220" !integer ws? params:m220Parameter* {
-      const errors = []; 
-      const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-            type: 'duplicate_parameters',
-            command: 'M220',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M220",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,   
-            end: location().end, 
-          },
-        };
+  = c:"M220" !integer ws? params:m220Parameter* {
+      var errors = [];
+        const duplicates = findDuplicateParameters(params);
+        const commandVersion = { required: "1.0.0" };
+        const paramVersions = [
+          {  name: "B", required: "1.0.0" },
+          {  name: "R", required: "1.0.0" },
+          {  name: "S", required: "1.0.0" },
+        ];
     }
   
   m220Parameter
@@ -4625,30 +3902,14 @@ m220Command
 // [T<index>]	
 // Target extruder (requires multi-extruder). Default is the active extruder.
 m221Command 
-  = "M221" !integer ws? params:m221Parameter* {
-      const errors = []; 
-      const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-            type: 'duplicate_parameters',
-            command: 'M221',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M221",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,   
-            end: location().end, 
-          },
-        };
+  = c:"M221" !integer ws? params:m221Parameter* {
+      var errors = [];
+        const duplicates = findDuplicateParameters(params);
+        const commandVersion = { required: "1.0.0" };
+        const paramVersions = [
+          {  name: "S", required: "1.0.0" },
+          {  name: "T", required: "1.0.0" },
+        ];
     }
 
   m221Parameter
@@ -4663,30 +3924,16 @@ m221Command
 // [S<state>]	
 // State 0 or 1. Default -1 for inverted.
 m226Command 
-  = "M226" !integer ws? params:m226Parameter* {
-      const errors = []; 
+  = c:"M226" !integer ws? params:m226Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-            type: 'duplicate_parameters',
-            command: 'M226',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M226",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,   
-            end: location().end, 
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        {  name: "P", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+      ];
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m226Parameter
@@ -4721,30 +3968,27 @@ m226Command
 // [Z<length>]	
 // Main photo move Z raise. (Requires PHOTO_POSITION)
   m240Command 
-  = "M240" !integer ws? params:m240Parameter* {
-      const errors = []; 
+  = c:"M240" !integer ws? params:m240Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-            type: 'duplicate_parameters',
-            command: 'M240',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M240",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,   
-            end: location().end,
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "A", required: "1.0.0" },
+        {  name: "B", required: "1.0.0" },
+        {  name: "D", required: "1.0.0" },
+        {  name: "F", required: "1.0.0" },
+        {  name: "I", required: "1.0.0" },
+        {  name: "J", required: "1.0.0" },
+        {  name: "P", required: "1.0.0" },
+        {  name: "R", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+        {  name: "X", required: "1.0.0" },
+        {  name: "Y", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m240Parameter
@@ -4767,30 +4011,16 @@ m226Command
 // [C<contrast>]	
 // Contrast value
 m250Command 
-  = "M250" !integer ws? params:m250Parameter* {
-      const errors = []; 
+  = c:"M250" !integer ws? params:m250Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-            type: 'duplicate_parameters',
-            command: 'M250',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M250",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end,
-          },
-        };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "C", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m250Parameter
@@ -4802,30 +4032,16 @@ m250Command
 // S<minutes>	
 // Timeout delay in minutes.
 m255Command 
-  = "M255" !integer ws? params:m255Parameter* {
-      const errors = []; 
+  = c:"M255" !integer ws? params:m255Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-            type: 'duplicate_parameters',
-            command: 'M255',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M255",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end,
-          },
-        };
+      const commandVersion = { required: "2.0.9.4" };
+      const paramVersions = [
+        { name: "S", required: "2.0.9.4" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m255Parameter
@@ -4837,30 +4053,16 @@ m255Command
 // [B<brightness>]	
 // Brightness value (0 - 255)
 m256Command 
-  = "M256" !integer ws? params:m256Parameter* {
-      const errors = []; 
+  = c:"M256" !integer ws? params:m256Parameter* {
+        var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-            type: 'duplicate_parameters',
-            command: 'M256',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
-  
-      return {
-          command: "M256",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end,
-          },
-        };
+      const commandVersion = { required: "2.0.9.2" };
+      const paramVersions = [
+        { name: "B", required: "2.0.9.2" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m256Parameter
@@ -4878,30 +4080,19 @@ m256Command
 // [S<flag>]	
 // Send flag. Flush the buffer to the bus.
 m260Command 
-  = "M260" !integer ws? params:m260Parameter* {
-      const errors = []; 
+  = c:"M260" !integer ws? params:m260Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-            type: 'duplicate_parameters',
-            command: 'M260',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "A", required: "1.0.0" },
+        {  name: "B", required: "1.0.0" },
+        {  name: "R", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+      ];
 
-      return {
-          command: "M260",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end,
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m260Parameter
@@ -4925,30 +4116,18 @@ m260Command
 // S2: 1 or 2 byte value (decimal)
 // S3: Bytes (decimal)
 m261Command 
-  = "M261" !integer ws? params:m261Parameter* {
-      const errors = []; 
+  = c:"M261" !integer ws? params:m261Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-            type: 'duplicate_parameters',
-            command: 'M261',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        {  name: "A", required: "1.0.0" },
+        {  name: "B", required: "1.0.0" },
+        {  name: "S", required: "2.0.9.3" },
+      ];
 
-      return {
-          command: "M261",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end,
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m261Parameter
@@ -4964,30 +4143,17 @@ m261Command
 // S<pos>	
 // Servo position to set. Omit to read the current position.
 m280Command 
-  = "M280" !integer ws? params:m280Parameter* {
-      const errors = []; 
+  = c:"M280" !integer ws? params:m280Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-            type: 'duplicate_parameters',
-            command: 'M280',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "P", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+      ];
 
-      return {
-          command: "M280",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end,
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m280Parameter
@@ -5004,30 +4170,18 @@ m280Command
 // [U<degrees>]	
 // Stow angle in degrees.
 m281Command 
-  = "M281" !integer ws? params:m281Parameter* {
-      const errors = []; 
+  = c:"M281" !integer ws? params:m281Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-            type: 'duplicate_parameters',
-            command: 'M281',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "2.0.0" };
+      const paramVersions = [
+        { name: "L", required: "2.0.0" },
+        { name: "P", required: "2.0.0" },
+        {  name: "U", required: "2.0.0" },
+      ];
 
-      return {
-          command: "M281",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end,
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m281Parameter
@@ -5041,30 +4195,16 @@ m281Command
 // P<index>	
 // Index of the servo to detach.
 m282Command 
-  = "M282" !integer ws? params:m282Parameter* {
-      const errors = []; 
+  = c:"M282" !integer ws? params:m282Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-            type: 'duplicate_parameters',
-            command: 'M282',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "2.0.9.2" };
+      const paramVersions = [
+        {  name: "P", required: "2.0.9.2" },
+      ];
 
-      return {
-          command: "M282",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end,
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m282Parameter
@@ -5084,30 +4224,20 @@ m282Command
 // [Z<pos>]	
 // A distance on the Z axis
 m290Command 
-  = "M290" !integer ws? params:m290Parameter* {
-      const errors = []; 
+  = c:"M290" !integer ws? params:m290Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-            type: 'duplicate_parameters',
-            command: 'M290',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "1.1.7" };
+      const paramVersions = [
+        { name: "P", required: "1.1.7" },
+        {  name: "S", required: "1.1.7" },
+        {  name: "X", required: "1.1.7" },
+        {  name: "Y", required: "1.1.7" },
+        {  name: "Z", required: "1.1.7" },
+      ];
 
-      return {
-          command: "M290",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end,
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m290Parameter
@@ -5126,30 +4256,17 @@ m290Command
 // [S<Hz>]	
 // Frequency (260Hz)
 m300Command 
-  = "M300" !integer ws? params:m300Parameter* {
-      const errors = []; 
+  = c:"M300" !integer ws? params:m300Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-            type: 'duplicate_parameters',
-            command: 'M300',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "P", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+      ];
 
-      return {
-          command: "M300",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end,
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m300Parameter
@@ -5175,30 +4292,22 @@ m300Command
 // [P<value>]	
 // Proportional value
 m301Command 
-  = "M301" !integer ws? params:m301Parameter* {
-      const errors = []; 
+  = c:"M301" !integer ws? params:m301Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-            type: 'duplicate_parameters',
-            command: 'M301',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "C", required: "1.0.0" },
+        {  name: "D", required: "1.0.0" },
+        {  name: "E", required: "1.0.0" },
+        {  name: "F", required: "1.0.0" },
+        {  name: "I", required: "1.0.0" },
+        {  name: "L", required: "1.0.0" },
+        {  name: "P", required: "1.0.0" },
+      ];
 
-      return {
-          command: "M301",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end,
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m301Parameter
@@ -5218,30 +4327,17 @@ m301Command
 // [S<temp>]	
 // Minimum temperature for safe extrusion
 m302Command 
-  = "M302" !integer ws? params:m302Parameter* {
-      const errors = []; 
+  = c:"M302" !integer ws? params:m302Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-            type: 'duplicate_parameters',
-            command: 'M302',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "P", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+      ];
 
-      return {
-          command: "M302",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start,  
-            end: location().end,
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
 
   m302Parameter
@@ -5264,30 +4360,20 @@ m302Command
 // U<flag>	
 // Use PID result. (Otherwise just print it out.)
 m303Command 
-  = "M303" !integer ws? params:m303Parameter* {
-      const errors = []; 
+  = c:"M303" !integer ws? params:m303Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-            type: 'duplicate_parameters',
-            command: 'M303',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "C", required: "1.0.0" },
+        {  name: "D", required: "1.0.0" },
+        {  name: "E", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+        {  name: "U", required: "1.0.0" },
+      ];
 
-      return {
-          command: "M303",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start, 
-            end: location().end,
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m303Parameter
@@ -5308,30 +4394,21 @@ m303Command
 // [P<value>]	
 // Proportional value
 m304Command 
-  = "M304" !integer ws? params:m304Parameter* {
-      const errors = []; 
+  = c:"M304" !integer ws? params:m304Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M304',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "X", required: "1.0.0" },
+        { name: "Y", required: "1.0.0" },
+        { name: "Z", required: "1.0.0" },
+        { name: "E", required: "1.0.0" },
+        { name: "F", required: "1.0.0" },
+        { name: "S", required: "1.0.0" },
+      ];
 
-      return {
-          command: "M304",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start, 
-            end: location().end,
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m304Parameter
@@ -5353,30 +4430,20 @@ m304Command
 // [T<ohms>]	
 // Resistance at 25C
 m305Command 
-  = "M305" !integer ws? params:m305Parameter* {
-      const errors = []; 
+  = c:"M305" !integer ws? params:m305Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M305',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "B", required: "1.0.0" },
+        {  name: "C", required: "1.0.0" },
+        {  name: "P", required: "1.0.0" },
+        {  name: "R", required: "1.0.0" },
+        {  name: "T", required: "1.0.0" },
+      ];
 
-      return {
-          command: "M305",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start, 
-            end: location().end,
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m305Parameter
@@ -5407,30 +4474,23 @@ m305Command
 // [T]	
 // Autotune the selected extruder.
 m306Command 
-  = "M306" !integer ws? params:m306Parameter* {
-      const errors = []; 
+  = c:"M306" !integer ws? params:m306Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M306',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "2.0.9.4" };
+      const paramVersions = [
+        { name: "A", required: "2.0.9.4" },
+        {  name: "C", required: "2.0.9.4" },
+        {  name: "E", required: "2.0.9.4" },
+        {  name: "F", required: "2.0.9.4" },
+        {  name: "H", required: "2.0.9.4" },
+        {  name: "P", required: "2.0.9.4" },
+        {  name: "R", required: "2.0.9.4" },
+        {  name: "T", required: "2.0.9.4" },
+      ];
 
-      return {
-          command: "M306",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start, 
-            end: location().end,
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m306Parameter
@@ -5460,46 +4520,21 @@ m306Command
 // [Z<1|2|4|8|16>]	
 // Set micro-stepping for the Z stepper driver.
   m350Command 
-  = "M350" !integer ws? params:m350Parameter* {
-      const errors = []; 
+  = c:"M350" !integer ws? params:m350Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M350',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "B", required: "1.0.0" },
+        {  name: "E", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+        {  name: "X", required: "1.0.0" },
+        {  name: "Y", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
 
-      //TODO: check for missing stepper drivers
-      const stepperDrivers = ['B', 'E', 'S', 'X', 'Y', 'Z'];
-      const stepperDriverParameters = params.filter(p => stepperDrivers.includes(p.key)).map(p => p.key);
-      const missingStepperDrivers = stepperDrivers.filter(d => !stepperDriverParameters.includes(d));
-      if(missingStepperDrivers.length > 0) {
-        errors.push({
-            type: 'missing_stepper_drivers',
-            command: 'M350',
-            missing: missingStepperDrivers,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
-
-      return {
-          command: "M350",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start, 
-            end: location().end,
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
     }
   
   m350Parameter
@@ -5528,30 +4563,21 @@ m306Command
 // [Z<0|1>]	
 // Set the MS1/2 pin for the Z stepper driver.
 m351Command 
-  = "M351" !integer ws? params:m351Parameter* {
-      const errors = []; 
+  = c:"M351" !integer ws? params:m351Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M351',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "B", required: "1.0.0" },
+        {  name: "E", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+        {  name: "X", required: "1.0.0" },
+        {  name: "Y", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
 
-      return {
-          command: "M351",
-          parameters: params,
-          errors: errors.length > 0 ? errors : null, 
-          location: {
-            start: location().start, 
-            end: location().end,
-          },
-        };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m351Parameter
@@ -5570,21 +4596,17 @@ m351Command
 // [S<bool>]	
 // Turn the case light on or off.
 m355Command 
-  = "M355" !integer ws? params:m355Parameter* {
-      const errors = []; 
+  = c:"M355" !integer ws? params:m355Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M355',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "P", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+      ];
 
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m355Parameter
@@ -5597,31 +4619,16 @@ m355Command
 // [S<index>]  2.0.0 MANUAL_SOLENOID_CONTROL	
 // Solenoid index (Requires MANUAL_SOLENOID_CONTROL)
 m380Command 
-  = "M380" !integer ws? params:m380Parameter* {
-      const errors = []; 
+  = c:"M380" !integer ws? params:m380Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M380',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
+      const commandVersion = { required: "2.0.0" };
+      const paramVersions = [
+        { name: "S", required: "2.0.0" },
+      ];
 
-      return {
-        command: "M380",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      };
-
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m380Parameter
@@ -5633,30 +4640,16 @@ m380Command
 // [S<index>]  2.0.0 MANUAL_SOLENOID_CONTROL	
 // Solenoid index (Requires MANUAL_SOLENOID_CONTROL)
 m381Command 
-  = "M381" !integer ws? params:m381Parameter* {
-      const errors = []; 
+  = c:"M381" !integer ws? params:m381Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M381',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
-      
-      return {
-        command: "M381",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "2.0.0" };
+      const paramVersions = [
+        { name: "S", required: "2.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m381Parameter
@@ -5670,30 +4663,17 @@ m381Command
 // [S<bool>]  2.0.9.3 BLTOUCH_HS_MODE	
 // Set the BLTouch High Speed (HS) Mode state and exit without deploy.
 m401Command 
-  = "M401" !integer ws? params:m401Parameter* {
-      const errors = []; 
+  = c:"M401" !integer ws? params:m401Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M401',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
-      
-      return {
-        command: "M401",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "H", required: "2.0.9.4" },
+        {  name: "S", required: "2.0.9.3" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m401Parameter
@@ -5712,30 +4692,17 @@ m401Command
 // F1: Flexible filament
 // F2: PVA
 m403Command 
-  = "M403" !integer ws? params:m403Parameter* {
-      const errors = []; 
+  = c:"M403" !integer ws? params:m403Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-            type: 'duplicate_parameters',
-            command: 'M403',
-            duplicates: duplicates,
-            location: {
-              start: location().start, 
-              end: location().end,
-            },
-          });
-      }
-      
-      return {
-        command: "M403",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "E", required: "1.0.0" },
+        {  name: "F", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m403Parameter
@@ -5748,30 +4715,16 @@ m403Command
 // [W<linear>]	
 // The new nominal width value
 m404Command 
-  = "M404" !integer ws? params:m404Parameter* {
-      const errors = []; 
+  = c:"M404" !integer ws? params:m404Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M404',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end,
-          },
-        });
-      }
-      
-      return {
-        command: "M404",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "W", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m404Parameter
@@ -5783,30 +4736,16 @@ m404Command
 // [D<cm>]	
 // Distance from measurement point to hot end. If not given, the previous value will be used. The default startup value is set by MEASUREMENT_DELAY_CM.
 m405Command 
-  = "M405" !integer ws? params:m405Parameter* {
-      const errors = []; 
+  = c:"M405" !integer ws? params:m405Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M405',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end,
-          },
-        });
-      }
-      
-      return {
-        command: "M405",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "D", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m405Parameter
@@ -5824,30 +4763,19 @@ m405Command
 // [S<bool>]	
 // Flag to enable or disable Filament Runout Detection. If omitted, the current enabled state will be reported.
 m412Command 
-  = "M412" !integer ws? params:m412Parameter* {
-      const errors = []; 
+  = c:"M412" !integer ws? params:m412Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M412',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end,
-          },
-        });
-      }
-      
-      return {
-        command: "M412",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "2.0.0" };
+      const paramVersions = [
+        { name: "D", required: "2.0.0" },
+        {  name: "H", required: "2.0.0" },
+        {  name: "R", required: "2.0.0" },
+        {  name: "S", required: "2.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m412Parameter
@@ -5862,30 +4790,16 @@ m412Command
 // [S<bool>]	
 // Flag to enable or disable Power-loss Recovery. If omitted, the current enabled state will be reported.
 m413Command 
-  = "M413" !integer ws? params:m413Parameter* {
-      const errors = []; 
+  = c:"M413" !integer ws? params:m413Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M413',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end,
-          },
-        });
-      }
-      
-      return {
-        command: "M413",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "2.0.0" };
+      const paramVersions = [
+        { name: "S", required: "2.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m413Parameter
@@ -5912,30 +4826,21 @@ m413Command
 // With Fade enabled, bed leveling correction is gradually reduced as the nozzle gets closer to the Fade height. Above the Fade height no bed leveling compensation is applied at all, so movement is machine true.
 // Set to 0 to disable fade, and leveling compensation will be fully applied to all layers of the print.
 m420Command 
-  = "M420" !integer ws? params:m420Parameter* {
-      const errors = []; 
+  = c:"M420" !integer ws? params:m420Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M420',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end,
-          },
-        });
-      }
-      
-      return {
-        command: "M420",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "C", required: "1.0.0" },
+        {  name: "L", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+        {  name: "T", required: "1.0.0" },
+        {  name: "V", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m420Parameter
@@ -5966,30 +4871,23 @@ m420Command
 // [Z<linear>]	
 // The new Z value to set
 m421Command 
-  = "M421" !integer ws? params:m421Parameter* {
-      const errors = []; 
+  = c:"M421" !integer ws? params:m421Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M421',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end,
-          },
-        });
-      }
-      
-      return {
-        command: "M421",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "C", required: "1.0.0" },
+        {  name: "I", required: "1.0.0" },
+        {  name: "J", required: "1.0.0" },
+        {  name: "N", required: "1.0.0" },
+        {  name: "Q", required: "1.0.0" },
+        {  name: "X", required: "1.0.0" },
+        {  name: "Y", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m421Parameter
@@ -6016,31 +4914,20 @@ m421Command
 // [Y<linear>]	
 // Y position
 m422Command 
-  = "M422" !integer ws? params:m422Parameter* {
-      const errors = []; 
+  = c:"M422" !integer ws? params:m422Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',
-          command: 'M422',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end,
-          },
-        });
-      }
-      
-      return {
-        command: "M422",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "2.0.4" };
+      const paramVersions = [
+        { name: "R", required: "2.0.4" },
+        {  name: "S", required: "2.0.4" },
+        {  name: "W", required: "2.0.4" },
+        {  name: "X", required: "2.0.4" },
+        {  name: "Y", required: "2.0.4" },
+      ];
 
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m422Parameter
@@ -6064,30 +4951,20 @@ m422Command
 // [Z<index>]	
 // A Z-offset value to set in the Twist Compensation array. Requires an X index.
 m423Command 
-  = "M423" !integer ws? params:m423Parameter* {
-      const errors = []; 
+  = c:"M423" !integer ws? params:m423Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-          type: 'duplicate_parameters',
-          command: 'M423',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end,
-          },
-        });
-      }
-      
-      return {
-        command: "M423",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      };
+      const commandVersion = { required: "2.0.9.4" };
+      const paramVersions = [
+        { name: "A", required: "2.0.9.4" },
+        {  name: "I", required: "2.0.9.4" },
+        {  name: "R", required: "2.0.9.4" },
+        {  name: "X", required: "2.0.9.4" },
+        {  name: "Z", required: "2.0.9.4" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
 
   }
 
@@ -6114,31 +4991,20 @@ m423Command
 // [Z]	
 // When MEASURE_BACKLASH_WHEN_PROBING is enabled, loads the measured backlash into the backlash distance parameter
 m425Command 
-  = "M425" !integer ws? params:m425Parameter* {
-      const errors = []; 
+  = c:"M425" !integer ws? params:m425Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-          type: 'duplicate_parameters',
-          command: 'M425',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end,
-          },
-        });
-      }
-      
-      return {
-        command: "M425",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        }
-      };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "F", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+        {  name: "X", required: "1.0.0" },
+        {  name: "Y", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
 
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m425Parameter
@@ -6148,7 +5014,6 @@ m425Command
     / p:"Y" v:linear ws?{ return makeParameter(p, v, location()); }
     / p:"Z" v:linear ws?{ return makeParameter(p, v, location()); }
     / "Z" ws?{ return makeParameter("Z", true, location()); }
-
   
 //M430 - Power Monitor
 // M430 [I<bool>] [V<bool>] [W<bool>]
@@ -6160,31 +5025,18 @@ m425Command
 // [W<bool>]	
 // display power/watts (W) on LCD
 m430Command 
-  = "M430" !integer ws? params:m430Parameter* {
-      const errors = []; 
+  = c:"M430" !integer ws? params:m430Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-          type: 'duplicate_parameters',
-          command: 'M430',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end,
-          },
-        });
-      }
-      
-      return {
-        command: "M430",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end
-        }
-      };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        {  name: "I", required: "1.0.0" },
+        {  name: "V", required: "1.0.0" },
+        {  name: "W", required: "1.0.0" },
+      ];
 
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m430Parameter
@@ -6206,31 +5058,19 @@ m430Command
 // [U<index>]	
 // Un-cancel the object with the given index. This command will be ignored if the object has already been skipped.
 m486Command 
-  = "M486" !integer ws? params:m486Parameter* {
-      const errors = []; 
+  = c:"M486" !integer ws? params:m486Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-          type: 'duplicate_parameters',
-          command: 'M486',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
-      
-      return {
-        command: "M486",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end
-        }
-      };
-
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "C", required: "1.0.0" },
+        {  name: "P", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+        {  name: "T", required: "1.0.0" },
+        {  name: "U", required: "1.0.0" },
+      ];
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m486Parameter
@@ -6248,31 +5088,17 @@ m486Command
 // [S]	
 // Detailed output flag. (true if omitted.)
 m503Command 
-  = "M503" !integer ws? params:m503Parameter* {
-      const errors = []; 
+  = c:"M503" !integer ws? params:m503Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-          type: 'duplicate_parameters',
-          command: 'M503',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
-      
-      return {
-        command: "M503",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end
-        }
-      };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "C", required: "2.0.9.3" },
+        {  name: "S", required: "1.0.0" },
+      ];
 
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m503Parameter
@@ -6285,30 +5111,16 @@ m503Command
 // P<passcode>	
 // The passcode to try.
 m511Command 
-  = "M511" !integer ws? params:m511Parameter* {
-      const errors = []; 
+  = c:"M511" !integer ws? params:m511Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-          type: 'duplicate_parameters',
-          command: 'M511',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
-      
-      return {
-        command: "M511",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end
-        }
-      };
+      const commandVersion = { required: "2.0.6.1" };
+      const paramVersions = [
+        { name: "P", required: "2.0.6.1" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
 
   }
 
@@ -6323,31 +5135,16 @@ m511Command
 // [S<password>]	
 // If S is included the new passcode will be set to this value.
 m512Command 
-  = "M512" !integer ws? params:m512Parameter* {
-      const errors = []; 
+  = c:"M512" !integer ws? params:m512Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-          type: 'duplicate_parameters',
-          command: 'M512',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
-      
-      return {
-        command: "M512",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end
-        }
-      };
-
+      const commandVersion = { required: "2.0.6.1" };
+      const paramVersions = [
+        { name: "P", required: "2.0.6.1" },
+        {  name: "S", required: "2.0.6.1" },
+      ];
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m512Parameter
@@ -6360,31 +5157,16 @@ m512Command
 // S<flag>	
 // Whether (1) or not (0) to abort SD printing on endstop hit.
 m540Command 
-  = "M540" !integer ws? params:m540Parameter* {
-      const errors = []; 
+  = c:"M540" !integer ws? params:m540Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-          type: 'duplicate_parameters',
-          command: 'M540',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
-      
-      return {
-        command: "M540",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end
-        }
-      };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "S", required: "1.0.0" },
+      ];
 
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m540Parameter
@@ -6406,30 +5188,21 @@ m540Command
 // [Z]	
 // Stepping mode for the Z stepper
 m569Command 
-  = "M569" !integer ws? params:m569Parameter* {
-      const errors = []; 
+  = c:"M569" !integer ws? params:m569Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-          type: 'duplicate_parameters',
-          command: 'M569',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
-      
-      return {
-        command: "M569",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end
-        }
-      };
+      const commandVersion = { required: "2.0.0" };
+      const paramVersions = [
+        { name: "E", required: "2.0.0" },
+        {  name: "I", required: "2.0.0" },
+        {  name: "T", required: "2.0.0" },
+        {  name: "X", required: "2.0.0" },
+        {  name: "Y", required: "2.0.0" },
+        {  name: "Z", required: "2.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
 
   }
 
@@ -6458,35 +5231,21 @@ m569Command
 // [P]	
 // Serial Port index. Omit for all serial ports.
 m575Command 
-  = "M575" !integer ws? params:m575Parameter* {
-      const errors = []; 
+  = c:"M575" !integer ws? params:m575Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-          type: 'duplicate_parameters', 
-          command: 'M575',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "B", required: "1.0.0" },
+        {  name: "P", required: "1.0.0" },
+      ];
 
-      return {
-        command: "M575",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end
-        }
-      };
-
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m575Parameter
-    = p:"B" v:integer ws?{ return makeParameter(p, v, location()); }
+    = p:"B" v:("2400" / "9600" / "19200" / "38400" / "57600" / "115200" / "250000" / "5000000" / "1000000") ws?{ return makeParameter(p, v, location()); }
     / "P" ws?{ return makeParameter("P", true, location()); }
 
 
@@ -6502,31 +5261,19 @@ m575Command
 // [Y]	
 // Flag to set the Y axis value. If X and Y are omitted, both will be set.
 m593Command 
-  = "M593" !integer ws? params:m593Parameter* {
-      const errors = []; 
+  = c:"M593" !integer ws? params:m593Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-          type: 'duplicate_parameters', 
-          command: 'M593',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
+      const commandVersion = { required: "2.1.2" };
+      const paramVersions = [
+        { name: "D", required: "2.1.2" },
+        {  name: "F", required: "2.1.2" },
+        {  name: "X", required: "2.1.2" },
+        {  name: "Y", required: "2.1.2" },
+      ];
 
-      return {
-        command: "M593",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end
-        }
-      };
-
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m593Parameter
@@ -6557,30 +5304,24 @@ m593Command
 // [Z<pos>]	
 // Z relative lift for filament change position
 m600Command 
-  = "M600" !integer ws? params:m600Parameter* {
-      const errors = []; 
+  = c:"M600" !integer ws? params:m600Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({  
-          type: 'duplicate_parameters', 
-          command: 'M600',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
+      const commandVersion = { required: "1.1.0" };
+      const paramVersions = [
+        { name: "B", required: "1.1.0" },
+        {  name: "E", required: "1.1.0" },
+        {  name: "L", required: "1.1.0" },
+        {  name: "R", required: "1.1.0" },
+        {  name: "T", required: "1.1.0" },
+        {  name: "U", required: "1.1.0" },
+        {  name: "X", required: "1.1.0" },
+        {  name: "Y", required: "1.1.0" },
+        {  name: "Z", required: "1.1.0" },
+      ];
 
-      return {
-        command: "M600",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end
-        }
-      };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
 
   }
 
@@ -6605,31 +5346,18 @@ m600Command
 // [U<pos>]	
 // Amount of retraction for unload (negative)
 m603Command 
-  = "M603" !integer ws? params:m603Parameter* {
-      const errors = []; 
+  = c:"M603" !integer ws? params:m603Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-          type: 'duplicate_parameters',  
-          command: 'M603',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
+      const commandVersion = { required: "1.1.0" };
+      const paramVersions = [
+        { name: "L", required: "1.1.0" },
+        {  name: "T", required: "1.1.0" },
+        {  name: "U", required: "1.1.0" },
+      ];
 
-      return {
-        command: "M603",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end
-        }
-      };
-
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m603Parameter
@@ -6655,30 +5383,20 @@ m603Command
 // [X<linear>]	
 // X distance between dual X carriages. (Requires DUAL_X_CARRIAGE)
 m605Command 
-  = "M605" !integer ws? params:m605Parameter* {
-      const errors = []; 
+  = c:"M605" !integer ws? params:m605Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-          type: 'duplicate_parameters',  
-          command: 'M605',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "E", required: "1.0.0" },
+        {  name: "P", required: "1.0.0" },
+        {  name: "R", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+        {  name: "X", required: "1.0.0" },
+      ];
 
-      return {
-        command: "M605",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end
-        }
-      };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
 
   }
 
@@ -6714,7 +5432,7 @@ m605Command
 // Gamma (Tower 3) angle trim
 
 // m665Command 
-//   = "M665" !integer ws? params:m665Parameter* {
+//   = c:"M665" !integer ws? params:m665Parameter* {
 //       const errors = []; 
 //       const duplicates = findDuplicateParameters(params);
 //       if(duplicates.length > 0) {
@@ -6763,30 +5481,18 @@ m605Command
 // [Z<adj>]	
 // Adjustment for the Z actuator endstop
 m666Command 
-  = "M666" !integer ws? params:m666Parameter* {
-      const errors = []; 
+  = c:"M666" !integer ws? params:m666Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-          type: 'duplicate_parameters',  
-          command: 'M666',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "X", required: "1.0.0" },
+        {  name: "Y", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
 
-      return {
-        command: "M666",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end
-        }
-      };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
 
   }
 
@@ -6803,30 +5509,17 @@ m666Command
 // [S<sensitivity>]	
 // Set sensitivity (0-255)
 m672Command 
-  = "M672" !integer ws? params:m672Parameter* {
-      const errors = []; 
+  = c:"M672" !integer ws? params:m672Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-          type: 'duplicate_parameters',  
-          command: 'M672',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
+      const commandVersion = { required: "2.0.2" };
+      const paramVersions = [
+        { name: "R", required: "2.0.2" },
+        {  name: "S", required: "2.0.2" },
+      ];
 
-      return {
-        command: "M672",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end
-        }
-      };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
 
   }
 
@@ -6844,30 +5537,18 @@ m672Command
 // [Z<distance>]	
 // Move the Z axis by this distance
 m701Command 
-  = "M701" !integer ws? params:m701Parameter* {
-      const errors = []; 
+  = c:"M701" !integer ws? params:m701Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-          type: 'duplicate_parameters',  
-          command: 'M701',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "L", required: "1.0.0" },
+        {  name: "T", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
 
-      return {
-        command: "M701",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end
-        }
-      };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
 
   }
 
@@ -6886,31 +5567,18 @@ m701Command
 // [Z<distance>]	
 // Move the Z axis by this distance
 m702Command 
-  = "M702" !integer ws? params:m702Parameter* {
-      const errors = []; 
+  = c:"M702" !integer ws? params:m702Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({ 
-          type: 'duplicate_parameters',  
-          command: 'M702',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "T", required: "1.0.0" },
+        { name: "U", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
 
-      return {
-        command: "M702",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end
-        }
-      };
-
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m702Parameter
@@ -6932,30 +5600,20 @@ m702Command
 // [S<speed>]	
 // Set the speed of the controller fan when motors are active.
 m710Command 
-  = "M710" !integer ws? params:m710Parameter* {
-      const errors = []; 
+  = c:"M710" !integer ws? params:m710Parameter* {
+ var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',   
-          command: 'M710',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
+      const commandVersion = { required: "2.0.5.2" };
+      const paramVersions = [
+        { name: "A", required: "2.0.5.2" },
+        {  name: "D", required: "2.0.5.2" },
+        {  name: "I", required: "2.0.5.2" },
+        {  name: "R", required: "2.0.5.2" },
+        {  name: "S", required: "2.0.5.2" },
+      ];
 
-      return {
-        command: "M710",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end
-        }
-      };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m710Parameter
@@ -6971,30 +5629,16 @@ m710Command
 // [L<count>]	
 // Loop counter. Use L or L0 for an infinite loop.
 m808Command 
-  = "M808" !integer ws? params:m808Parameter* {
-      const errors = []; 
+  = c:"M808" !integer ws? params:m808Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',   
-          command: 'M808',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
+      const commandVersion = { required: "2.0.8" };
+      const paramVersions = [
+        { name: "L", required: "2.0.8" },
+      ];
 
-      return {
-        command: "M808",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end
-        }
-      };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m808Parameter
@@ -7016,16 +5660,15 @@ m808Command
 // Set Macro to the given commands, separated by the pipe character.
 m810Command 
   = c:("M810" / "M811" / "M812" / "M813" / "4" / "5" / "M8162" / "M8172" / "M818" / "M819" ) !integer ws? params:m810Parameter {
-      const errors = []; 
-      return {
-        command: c,
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end
-        }
-      };
+      var errors = [];
+      const duplicates = findDuplicateParameters(params);
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+  
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m810Parameter
@@ -7041,30 +5684,18 @@ m810Command
 // [Z<linear>]	
 // Z probe Z offset
 m851Command 
-  = "M851" !integer ws? params:m851Parameter* {
-      const errors = []; 
+  = c:"M851" !integer ws? params:m851Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',   
-          command: 'M851',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "X", required: "1.0.0" },
+        {  name: "Y", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
 
-      return {
-        command: "M851",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end
-        },
-      };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m851Parameter
@@ -7084,30 +5715,19 @@ m851Command
 // [S]	
 // Alias for I when only XY skew correction is enabled
 m852Command 
-  = "M852" !integer ws? params:m852Parameter* {
-      const errors = []; 
+  = c:"M852" !integer ws? params:m852Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',   
-          command: 'M852',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "I", required: "1.0.0" },
+        {  name: "J", required: "1.0.0" },
+        {  name: "K", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+      ];
 
-      return {
-        command: "M852",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m852Parameter
@@ -7154,16 +5774,26 @@ m852Command
 // Report on Z axis encoder if present. (If A or I not specified)
   m860Command 
   = c:("M860" / "M861" / "M862" / "M863" / "M864" / "M865" / "M866" / "M867" / "M868" / "M869" ) !integer ws? params:m860Parameter {
-      const errors = []; 
-      return {
-        command: c,
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
+     var errors = [];
+      const duplicates = findDuplicateParameters(params);
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "E", required: "1.0.0" },
+        {  name: "I", required: "1.0.0" },
+        {  name: "O", required: "1.0.0" },
+        {  name: "P", required: "1.0.0" },
+        {  name: "R", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+        {  name: "T", required: "1.0.0" },
+        {  name: "U", required: "1.0.0" },
+        {  name: "X", required: "1.0.0" },
+        {  name: "Y", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m860Parameter
@@ -7186,29 +5816,16 @@ m852Command
 // S<response>	
 // Response to prompt
 m876Command 
-  = "M876" !integer ws? params:m876Parameter* {
-      const errors = []; 
+  = c:"M876" !integer ws? params:m876Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',   
-          command: 'M876',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
-      return {
-        command: "M876",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end
-        },
-      };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "S", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m876Parameter
@@ -7227,29 +5844,18 @@ m876Command
 // [T<index>]  2.0.0	
 // Extruder to which K, L, and S will apply. Requires EXTRA_LIN_ADVANCE_K.
 m900Command 
-  = "M900" !integer ws? params:m900Parameter* {
-      const errors = []; 
+  = c:"M900" !integer ws? params:m900Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',   
-          command: 'M900',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
-      return {
-        command: "M900",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end
-        },
-      };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "K", required: "1.0.0" },
+        {  name: "L", required: "2.0.0" },
+        {  name: "S", required: "2.0.0" },
+        {  name: "T", required: "2.0.0" },
+      ];
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m900Parameter
@@ -7275,29 +5881,21 @@ m900Command
 // [Z<mA>]	
 // Current for the Z stepper
 m906Command 
-  = "M906" !integer ws? params:m906Parameter* {
-      const errors = []; 
+  = c:"M906" !integer ws? params:m906Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',   
-          command: 'M906',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
-      return {
-        command: "M906",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end
-        },
-      };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "E", required: "1.0.0" },
+        {  name: "I", required: "1.1.9" },
+        {  name: "T", required: "1.1.9" },
+        {  name: "X", required: "1.0.0" },
+        {  name: "Y", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m906Parameter
@@ -7328,29 +5926,23 @@ m906Command
 // [Z<current>]	
 // Current for the Z stepper
 m907Command 
-  = "M907" !integer ws? params:m907Parameter* {
-      const errors = []; 
+  = c:"M907" !integer ws? params:m907Parameter* {
+     var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',   
-          command: 'M907',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
-      return {
-        command: "M907",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end
-        },
-      };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "B", required: "1.0.0" },
+        {  name: "C", required: "1.0.0" },
+        {  name: "D", required: "1.0.0" },
+        {  name: "E", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+        {  name: "X", required: "1.0.0" },
+        {  name: "Y", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m907Parameter
@@ -7371,29 +5963,17 @@ m907Command
 // S<current>	
 // Current value
 m908Command 
-  = "M908" !integer ws? params:m908Parameter* {
-      const errors = []; 
+  = c:"M908" !integer ws? params:m908Parameter* {
+      var errors = [];
       const duplicates = findDuplicateParameters(params);
-      if(duplicates.length > 0) {
-        errors.push({
-          type: 'duplicate_parameters',   
-          command: 'M908',
-          duplicates: duplicates,
-          location: {
-            start: location().start, 
-            end: location().end
-          }
-        });
-      }
-      return {
-        command: "M908",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end
-        },
-      };
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "P", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m908Parameter
@@ -7420,17 +6000,20 @@ m908Command
 // [Z]	
 // Clear Z and/or Z2 and/or Z3 stepper driver Over Temperature Pre-warn flag.
 m912Command 
-  = "M912" !integer ws? params:m912Parameter* {
-      const errors = []; 
-      return {
-        command: "M912",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end
-        },
-      };
+  = c:"M912" !integer ws? params:m912Parameter* {
+      var errors = [];
+      const duplicates = findDuplicateParameters(params);
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "E", required: "1.0.0" },
+        {  name: "I", required: "1.1.9" },
+        {  name: "X", required: "1.0.0" },
+        {  name: "Y", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m912Parameter
@@ -7456,17 +6039,21 @@ m912Command
 // [Z]	
 // Set Hybrid Threshold for Z to the given value.
 m913Command 
-  = "M913" !integer ws? params:m913Parameter* {
-      const errors = []; 
-      return {
-        command: "M913",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end
-        },
-      };
+  = c:"M913" !integer ws? params:m913Parameter* {
+     var errors = [];
+      const duplicates = findDuplicateParameters(params);
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "E", required: "1.0.0" },
+        {  name: "I", required: "1.1.9" },
+        {  name: "T", required: "1.1.9" },
+        {  name: "X", required: "1.0.0" },
+        {  name: "Y", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m913Parameter
@@ -7489,17 +6076,19 @@ m913Command
 // [Z<int>]	
 // Sensitivity of the Z stepper driver.
 m914Command 
-  = "M914" !integer ws? params:m914Parameter* {
-      const errors = []; 
-      return {
-        command: "M914",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      };
+  = c:"M914" !integer ws? params:m914Parameter* {
+      var errors = [];
+      const duplicates = findDuplicateParameters(params);
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "I", required: "1.1.9" },
+        {  name: "X", required: "1.0.0" },
+        {  name: "Y", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m914Parameter
@@ -7516,17 +6105,17 @@ m914Command
 // [Z<linear>]	
 // Extra distance past Z_MAX_POS to move the Z axis. (Default: CALIBRATION_EXTRA_HEIGHT)
 m915Command 
-  = "M915" !integer ws? params:m915Parameter* {
-      const errors = []; 
-      return {
-        command: "M915",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      };
+  = c:"M915" !integer ws? params:m915Parameter* {
+      var errors = [];
+      const duplicates = findDuplicateParameters(params);
+      const commandVersion = { required: "2.0.0" };
+      const paramVersions = [
+        { name: "S", required: "2.0.0" },
+        {  name: "Z", required: "2.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m915Parameter
@@ -7563,17 +6152,24 @@ m915Command
 // [Z<mm>]	
 // Monitor Z with the given displacement (1 - 255mm) on either side of the current position.
 m916Command 
-  = "M916" !integer ws? params:m916Parameter* {
-      const errors = []; 
-      return {
-        command: "M916",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      };
+  = c:"M916" !integer ws? params:m916Parameter* {
+     var errors = [];
+      const duplicates = findDuplicateParameters(params);
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "D", required: "1.0.0" },
+        {  name: "E", required: "1.0.0" },
+        {  name: "F", required: "1.0.0" },
+        {  name: "J", required: "1.0.0" },
+        {  name: "K", required: "1.0.0" },
+        {  name: "T", required: "1.0.0" },
+        {  name: "X", required: "1.0.0" },
+        {  name: "Y", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m916Parameter
@@ -7617,17 +6213,23 @@ m916Command
 // [Z<mm>]	
 // Monitor Z with the given displacement (1 - 255mm) on either side of the current position.
 m917Command 
-  = "M917" !integer ws? params:m917Parameter* {
-      const errors = []; 
-      return {
-        command: "M917",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      };
+  = c:"M917" !integer ws? params:m917Parameter* {
+     var errors = [];
+      const duplicates = findDuplicateParameters(params);
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "E", required: "1.0.0" },
+        {  name: "F", required: "1.0.0" },
+        {  name: "I", required: "1.0.0" },
+        {  name: "J", required: "1.0.0" },
+        {  name: "K", required: "1.0.0" },
+        {  name: "T", required: "1.0.0" },
+        {  name: "X", required: "1.0.0" },
+        {  name: "Y", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m917Parameter
@@ -7671,17 +6273,24 @@ m917Command
 // [Z<mm>]	
 // Monitor Z with the given displacement (1 - 255mm) on either side of the current position.
 m918Command 
-  = "M918" !integer ws? params:m918Parameter* {
-      const errors = []; 
-      return {
-        command: "M918",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      };
+  = c:"M918" !integer ws? params:m918Parameter* {
+     var errors = [];
+      const duplicates = findDuplicateParameters(params);
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "E", required: "1.0.0" },
+        {  name: "I", required: "1.0.0" },
+        {  name: "J", required: "1.0.0" },
+        {  name: "K", required: "1.0.0" },
+        {  name: "M", required: "1.0.0" },
+        {  name: "T", required: "1.0.0" },
+        {  name: "X", required: "1.0.0" },
+        {  name: "Y", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m918Parameter
@@ -7727,17 +6336,29 @@ m918Command
 // [Z] Z_DRIVER_TYPE	
 // Apply the given chopper timing to the Z stepper(s). (Requires 3 or more axes.)
 m919Command 
-  = "M919" !integer ws? params:m919Parameter* {
-      const errors = []; 
-      return {
-        command: "M919",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start, 
-          end: location().end,
-        },
-      };
+  = c:"M919" !integer ws? params:m919Parameter* {
+      var errors = [];
+      const duplicates = findDuplicateParameters(params);
+      const commandVersion = { required: "2.0.9.4" };
+      const paramVersions = [
+        { name: "A", required: "1.0.0" },
+        {  name: "B", required: "1.0.0" },
+        {  name: "C", required: "1.0.0" },
+        {  name: "I", required: "1.0.0" },
+        {  name: "O", required: "1.0.0" },
+        {  name: "P", required: "1.0.0" },
+        {  name: "S", required: "1.0.0" },
+        {  name: "T", required: "1.0.0" },
+        {  name: "U", required: "2.1.0" },
+        {  name: "V", required: "2.1.0" },
+        {  name: "W", required: "2.1.0" },
+        {  name: "X", required: "1.0.0" },
+        {  name: "Y", required: "1.0.0" },
+        {  name: "Z", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m919Parameter
@@ -7762,17 +6383,16 @@ m919Command
 // filename	
 // File name of log file
 m928Command 
-  = "M928" !integer ws? params:m928Parameter {
-      const errors = []; 
-      return {
-        command: "M928",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
+  = c:"M928" !integer ws? params:m928Parameter {
+      var errors = [];
+      const duplicates = findDuplicateParameters(params);
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "filename", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m928Parameter
@@ -7796,17 +6416,22 @@ m928Command
 // [R<linear>]	
 // Set X[1] position. (Default PARKING_EXTRUDER_PARKING_X)
 m951Command 
-  = "M951" !integer ws? params:m951Parameter* {
-      const errors = []; 
-      return {
-        command: "M951",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
+  = c:"M951" !integer ws? params:m951Parameter* {
+      var errors = [];
+      const duplicates = findDuplicateParameters(params);
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "C", required: "1.0.0" },
+        {  name: "D", required: "1.0.0" },
+        {  name: "H", required: "1.0.0" },
+        {  name: "I", required: "1.0.0" },
+        {  name: "J", required: "1.0.0" },
+        {  name: "L", required: "1.0.0" },
+        {  name: "R", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m951Parameter
@@ -7824,17 +6449,16 @@ m951Command
 // S<bool>	
 // Resume without flushing the command buffer. The default behavior is to flush the serial buffer and request a resend to the host starting on the last N line received.
 m999Command 
-  = "M999" !integer ws? params:m999Parameter {
-      const errors = []; 
-      return {
-        command: "M999",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
+  = c:"M999" !integer ws? params:m999Parameter {
+     var errors = [];
+      const duplicates = findDuplicateParameters(params);
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "S", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m999Parameter
@@ -7864,17 +6488,25 @@ m999Command
 // [Y<index>]	
 // Set a matrix LED at the given Y position to the V value. If no V is given, toggle the LED state.
 m7219Command 
-  = "M7219" !integer ws? params:m7219Parameter* {
-      const errors = []; 
-      return {
-        command: "M7219",
-        parameters: params,
-        errors: errors.length > 0 ? errors : null, 
-        location: {
-          start: location().start,
-          end: location().end,
-        },
-      };
+  = c:"M7219" !integer ws? params:m7219Parameter* {
+     var errors = [];
+      const duplicates = findDuplicateParameters(params);
+      const commandVersion = { required: "1.0.0" };
+      const paramVersions = [
+        { name: "C", required: "1.0.0" },
+        {  name: "D", required: "1.0.0" },
+        {  name: "F", required: "1.0.0" },
+        {  name: "I", required: "1.0.0" },
+        {  name: "P", required: "1.0.0" },
+        {  name: "R", required: "1.0.0" },
+        {  name: "U", required: "1.0.0" },
+        {  name: "V", required: "1.0.0" },
+        {  name: "X", required: "1.0.0" },
+        {  name: "Y", required: "1.0.0" },
+      ];
+
+return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+    
   }
 
   m7219Parameter
