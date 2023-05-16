@@ -127,7 +127,7 @@ if(requiredParams !== null){
   };
 }
 
-//This is versions for all non parameter commands.
+//This is versions for all non-parameter commands.
 function getRequiredVersionForCommand(command) {
     switch (command) {
       //G-codes
@@ -202,7 +202,6 @@ function getRequiredVersionForCommand(command) {
       case "M994": return "1.0.0";
       case "M995": return "1.0.0";
       case "M997": return "2.0.0";
-      // Add cases for other commands with their required versions
       default: return "1.0.0";
     }
   }
@@ -212,25 +211,22 @@ function getRequiredVersionForCommand(command) {
 //Start rule for the parser.
 //Line is expeted to start with one of the start rules.
 //Not sure if Marlin supports Line numbers, but i added, just in case.
-
 start
-  = lineNumber? ws? commands:(gCommand / mCommand / comment / emptyLine)*  ws?  nl? {
+  = lineNumber? ws? command:(gCommand / mCommand / comment / emptyLine)  ws?  nl? comment? {
       const errors = []; 
-      commands = commands.filter(c => c.type !== 'emptyLine'); 
-      commands.forEach(c => {
-        if (c.errors) {
-          errors.push(...c.errors);
-        }
-      });
+      if (command.errors) {
+          errors.push(...command.errors);
+      }
       if (options.collectErrors) {
         return {
-          commands: commands,
+          command: command,
           errors: errors,
         };
       } else {
-        return { commands: commands };
+        return { command: command };
       }
     }
+
 
 
 
@@ -254,7 +250,7 @@ emptyLine "Empty Line"
 ws "whitespace" 
   = [ \t]* / " "*
 
-nl "Newl line"
+nl "New line"
   = [\r] / [\n] / [\r][\n]? 
 
 //*******************Numbers******************//
@@ -509,33 +505,37 @@ gCommand
     ) { return c; }
 
 //All G-codes that takes no parameters. So that only comment is allowed.
+//List is in reverse order to avoid prefix ambiguity.
+//Any added commands must be added in getRequiredVersionForCommand function.
 noParamGCommand 
   = c:(
-    "G17" /
-    "G18" /
-    "G19" /
-    "G20" /
-    "G21" / 
-    "G31" / 
-    "G32" / 
-    "G53" / 
-    "G54" / 
-    "G55" / 
-    "G56" / 
-    "G57" / 
-    "G58" / 
-    "G59.1" / 
-    "G59.2" / 
-    "G59.3" /
-    "G59" /
-    "G80" /
+    "G91" /
     "G90" /
-    "G91" )!integer ws? {
+    "G80" /
+    "G59" /
+    "G59.3" /
+    "G59.2" /
+    "G59.1" / 
+    "G58" / 
+    "G57" / 
+    "G56" / 
+    "G55" / 
+    "G54" / 
+    "G53" / 
+    "G32" / 
+    "G31" / 
+    "G21" /
+    "G20" /
+    "G19" /
+    "G18" /
+    "G17"
+    )!integer ws? {
       const commandVersion = {
         required: getRequiredVersionForCommand(c),
       };
       return createCommand(c, [], [], commandVersion, [], [] , [], location());
     }
+
 
 //all M commands with parameters
 mCommand 
@@ -683,75 +683,74 @@ mCommand
     m999Command /
     m7219Command /
     noParamMCommands 
-    ) ws? { return c; } 
+    ) { return c; } 
 
 //All mcodes that takes no parameters. So that only comment is allowed.
+//List must be in reverse order to avoid prefix ambiguity.
+//Any added commands must be added in getRequiredVersionForCommand function.
 noParamMCommands 
   = (
-    "M5" /
-    "M7" /
-    "M8" /
-    "M9" /
-    "M10" /
-    "M11" /
-    "M21" /
-    "M22" /
-    "M25" /
-    "M29" /
-    "M31" /
-    "M76" /
-    "M77" /
-    "M78" /
-    "M81" /
-    "M82" /
-    "M83" /
-    "M108" /
-    "M112" /
-    "M115" /
-    "M119" /
-    "M120" /
-    "M121" /
-    "M123" /
-    "M127" /
-    "M129" /
-    "M360" /
-    "M361" /
-    "M362" /
-    "M363" /
-    "M364" /
-    "M400" /
-    "M402" /
-    "M406" /
-    "M407" /
-    "M410" /
-    "M428" /
-    "M500" /
-    "M501" /
-    "M502" /
-    "M504" /
-    "M510" /
-    "M524" /
-    "M909" /
-    "M910" /
-    "M911" /
-    "M993" /
-    "M994" /
+    "M997" /
     "M995" /
-    "M997" 
-    ) !integer ws? {
-      return {
-        command: text(),
-        parameters: [],
-        location: {
-          start: location().start,
-          end: location().end,
-        },
+    "M994" /
+    "M993" /
+    "M911" /
+    "M910" /
+    "M909" /
+    "M524" /
+    "M510" /
+    "M504" /
+    "M502" /
+    "M501" /
+    "M500" /
+    "M428" /
+    "M410" /
+    "M407" /
+    "M406" /
+    "M402" /
+    "M400" /
+    "M364" /
+    "M363" /
+    "M362" /
+    "M361" /
+    "M360" /
+    "M129" /
+    "M127" /
+    "M123" /
+    "M121" /
+    "M120" /
+    "M119" /
+    "M115" /
+    "M112" /
+    "M108" /
+    "M83" /
+    "M82" /
+    "M81" /
+    "M78" /
+    "M77" /
+    "M76" /   
+    "M31" /
+    "M29" /
+    "M25" /
+    "M22" /
+    "M21" /
+    "M11" /
+    "M10" /
+    "M9" /
+    "M8" /
+    "M7" /     
+    "M5" 
+    ) !integer ws?{
+      const commandVersion = {
+        required: getRequiredVersionForCommand(c),
       };
+      return createCommand(c, [], [], commandVersion, [], [] , [], location());
     }
+
 
 //G0-G1 - Linear Move
 //G0 and G1 commands are very similar.
-// I could have made one rule for both of them, but it is separate because G0 wans about using G1 for print / laser cut moves.
+// I could have made one rule for both of them, but it is separate because G0 warns about using G1 for print / laser cut moves.
 //G0 [E<pos>] [F<rate>] [S<power>] [X<pos>] [Y<pos>] [Z<pos>]
 // Parameters
 // [E<pos>]	
