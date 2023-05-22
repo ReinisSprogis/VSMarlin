@@ -231,7 +231,7 @@ start
 
 
 string 'String' 
-  = [a-zA-Z0-9_ ]*
+  = [a-zA-Z0-9_!"£$%^&?><,./#';=-`¬ ]*
 
 passcode 'Passcode'
   = [a-zA-Z0-9_!"£$%^&?><,./#';=-`¬\\|]*
@@ -512,10 +512,10 @@ noParamGCommand
     "G91" /
     "G90" /
     "G80" /
-    "G59" /
     "G59.3" /
     "G59.2" /
     "G59.1" / 
+    "G59" /
     "G58" / 
     "G57" / 
     "G56" / 
@@ -689,7 +689,7 @@ mCommand
 //List must be in reverse order to avoid prefix ambiguity.
 //Any added commands must be added in getRequiredVersionForCommand function.
 noParamMCommands 
-  = (
+  = c:(
     "M997" /
     "M995" /
     "M994" /
@@ -740,7 +740,7 @@ noParamMCommands
     "M8" /
     "M7" /     
     "M5" 
-    ) !integer ws?{
+    ) !integer ws? {
       const commandVersion = {
         required: getRequiredVersionForCommand(c),
       };
@@ -829,7 +829,7 @@ g1Command
         { name: "S", required: "2.1.1" },
       ];
 
-return createCommand(c, params, duplicates, commandVersion, paramVersions, null , errors, location());
+return createCommand(c, params, duplicates, commandVersion, paramVersions, [] , errors, location());
     
   }
 
@@ -1219,7 +1219,7 @@ return createCommand(c, params, duplicates, commandVersion, paramVersions, null 
     }
 
 g12Parameter
-  = p:"P" v:("1"/ "2" / "3") ws?{ return makeParameter(p, v, location()); }
+  = p:"P" v:("0"/ "1" / "2") ws?{ return makeParameter(p, v, location()); }
   / p:"R" v:number  ws?{ return makeParameter(p, v, location()); }
   / p:"S" v:integer  ws?{ return makeParameter(p, v, location()); } 
   / p:"T" v:integer  ws?{ return makeParameter(p, v, location()); }
@@ -1292,12 +1292,12 @@ g26Command
   
 g26Parameter
   =   p:"B" v:integer ws?{ return makeParameter(p, v, location()); }
-  / p:"C" v:flag ws?{ return makeParameter(p, v, location()); }
+  / p:"C" v:bool ws?{ return makeParameter(p, v, location()); }
   / p:"D" v:flag ws?{ return makeParameter(p, v, location()); }
   / p:"F" v:number ws?{ return makeParameter(p, v, location()); }
   / p:"H" v:integer ws?{ return makeParameter(p, v, location()); }
   / p:"I" v:integer ws?{ return makeParameter(p, v, location()); }
-  / p:"K" v:flag ws?{ return makeParameter(p, v, location()); }
+  / p:"K" v:bool ws?{ return makeParameter(p, v, location()); }
   / p:"L" v:number ws?{ return makeParameter(p, v, location()); }
   / p:"O" v:number ws?{ return makeParameter(p, v, location()); }
   / p:"P" v:number ws?{ return makeParameter(p, v, location()); }
@@ -1330,7 +1330,7 @@ g26Parameter
       }
 
   g27Parameter
-    = p:"P" v:("1"/ "2" / "3") ws?{ return makeParameter(p, v, location()); }
+    = p:"P" v:("0"/ "1" / "2") ws?{ return makeParameter(p, v, location()); }
 
 //G28 - Auto Home
 //G28 [L] [O] [R] [X] [Y] [Z]
@@ -1479,7 +1479,7 @@ g33Command
     / p:"E" v:bool ws?{ return makeParameter(p, v, location()); }
     / p:"F" v:integer ws?{ return makeParameter(p, v, location()); }
     / p:"O" v:bool ws?{ return makeParameter(p, v, location()); }
-    / p:"P" v:("0"/ "1" / "2" / "3" / "4" / "5" / "6" / "7" / "8" / "9" / "10") ws?{ return makeParameter(p, v, location()); }
+    / p:"P" v:("10"/ "9" / "8" / "7" / "6" / "5" / "4" / "3" / "2" / "1" / "0") ws?{ return makeParameter(p, v, location()); }
     / p:"R" v:number ws?{ return makeParameter(p, v, location()); }
     / p:"T" v:bool ws?{ return makeParameter(p, v, location()); }
     / p:"V" v:("0"/ "1" / "2" / "3") ws?{ return makeParameter(p, v, location()); }

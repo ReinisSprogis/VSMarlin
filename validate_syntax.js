@@ -1,6 +1,9 @@
 const vscode = require('vscode');
+
+//Marlin Gcode parser. Parses the gcode and finds errors and warnings.
 const marlinGcodeParser = require('./marlin_gcode_parser');
 
+//For showing syntax errors, warnings, suggestions and information in the editor.
 const diagnosticCollection = vscode.languages.createDiagnosticCollection('marlin');
 
 function validateAndProvideDiagnostics(document) {
@@ -14,7 +17,7 @@ function validateAndProvideDiagnostics(document) {
   for(let i = 0; i < document.lineCount; i++) {
     const line = document.lineAt(i);
     const lineText = line.text;
-    console.log(i + " " + lineText);
+  //  console.log(i + " " + lineText);
     try {
       
       const ast = marlinGcodeParser.parse(lineText, { collectErrors: true , marlinVersion: marlinVersion});
@@ -39,7 +42,7 @@ function createDiagnosticFromError(document, error,lineNumber) {
   let message = '';
 
 if (error.type === 'duplicate_parameters') {
-    //Showing if parameter is entered twice in command. And its not supported.
+    //Showing if parameter is entered twice in command. And it's not supported.
     message = `ERROR: Duplicate parameters in ${error.command} command: ${error.duplicates.join(', ')}`;
     return new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
   }else if(error.type === 'use_G1') {
@@ -95,6 +98,13 @@ function getMarlinVersion(gcode) {
 }
 
 
+function deactivate() {
+  if (statusBar) {
+    statusBar.dispose();
+  }
+}
+
 module.exports = {
-  validateAndProvideDiagnostics: validateAndProvideDiagnostics,
+  deactivate,
+  validateAndProvideDiagnostics
 };
