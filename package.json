@@ -2,7 +2,7 @@
   "name": "marlin",
   "displayName": "marlin",
   "description": "3D printing G-code Marlin support",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "engines": {
     "vscode": "^1.76.0"
   },
