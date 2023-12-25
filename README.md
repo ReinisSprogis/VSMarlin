@@ -1,4 +1,4 @@
-# marlin README
+# VSMarlin README
 
 This is an attempt of an VSCode extension for Marlin firmware G-Codes.
 Let me be honest and say that it is far from complete and it is my first attempt at an extension. I created this as experiment some time ago and now decided to release it to the public to show concept and see if community is interested, rather than leave it on the dusty shelf forever. I will try to improve it over time but I can't promise anything. If you want to contribute, feel free to do so. If there is interest to take this to next level by community and make this a real extension, probably should discuss with contributors how to proceed. Currently it is more of a proof of concept. It is also not up to date with latest Marlin firmware. 
