@@ -63,17 +63,22 @@ async function graphics(context) {
     }
 
     panel.webview.onDidReceiveMessage(
-      console.log("panel.webview.onDidReceiveMessage"),
-      (message) => {
-        if (message.type === 'ready') {
-          panel.webview.postMessage({ type: 'setUri', uri: panel.uri });
-          updateToolpath();
-        }
+      message => {
+          console.log("panel.webview.onDidReceiveMessage: " );
+  
+          if (message.type === 'ready') {
+              console.log("panel message ready: " + message.type);
+              panel.webview.postMessage({ type: 'setUri', uri: panel.uri });
+              updateToolpath();
+          } else {
+              console.log("message not ready: " + message.type);
+          }
       },
       undefined,
       context.subscriptions
-    );
-
+  );
+  
+    
     //Sets the color for tab icon.
     //This ir random color squared icon that has the sam color for each panel that is opened from same editor.
     panel.iconPath = getColoredIconUri(panelColors[uri], context);

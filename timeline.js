@@ -48,7 +48,6 @@ function timeline(context){
         }
     
         panel.webview.onDidReceiveMessage(
-          console.log("panel.webview.onDidReceiveMessage"),
           (message) => {
             if (message.type === 'ready') {
               panel.webview.postMessage({ type: 'setUri', uri: panel.uri });
