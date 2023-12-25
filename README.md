@@ -18,8 +18,8 @@ Program timeline chart
 ![Screenshot](media/screenshot.png)
 
 
-> Tip: Select panel of code and press ctrl+Alt+R to see tool path graphics
-> Tip: Select panel of code and press ctrl+Alt+T to see program timeline chart
+> Tip: Select panel of code and press ctrl+Alt+r to see tool path graphics  
+> Tip: Select panel of code and press ctrl+Alt+t to see program timeline chart  
 
 ## Requirements
 
