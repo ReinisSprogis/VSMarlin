@@ -37,7 +37,7 @@ VSCode
 
 Initial release.
 
-### 1.0.0
+### 0.1.0
 
 
 **Enjoy!**
