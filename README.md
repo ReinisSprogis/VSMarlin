@@ -14,7 +14,7 @@ Let me be honest and say that it is far from complete and it is my first attempt
 *Program timeline chart 
 
 
-\!\[Screenshot\]\(/media/screenshot.png?raw=true\)
+\!\[Screenshot\]\(media\screenshot.png\)
 
 > Tip: Select panel of code and press ctrl+Alt+R to see tool path graphics
 > Tip: Select panel of code and press ctrl+Alt+T to see program timeline chart
